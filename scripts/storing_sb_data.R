@@ -70,9 +70,9 @@ length(unique(ev$type.name))
 #   Block              1770
 #   Pressure          15958
 #~Special Circumstances~~~~
-#   50/50                56
+#   50/50                56 - this is when the ball is in the air and two guys are trying to get it
 #   Tactical Shift      125
-#   Duel               3355
+#   Duel               3355 - this is actually a defensive play
 
 evs_playerInfo <- c("Starting XI", "Player On", "Player Off", "Substitution")
 evs_timeMarkers <- c("Referee Ball-Drop", "Half Start", "Half End", "Injury Stoppage")

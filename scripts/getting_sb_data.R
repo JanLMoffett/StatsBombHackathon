@@ -36,7 +36,8 @@ matches_simple <- matches %>%
   arrange(match_date, kick_off)
 
 #write.csv(matches_simple, "data/matches_simple.csv")
-
+#write.csv(matches, "data/matches.csv")
+write.csv(managers, "data/managers.csv")
 
 data360 <- StatsBombFree360Events(MatchesDF = Matches, Parallel = T)
 
