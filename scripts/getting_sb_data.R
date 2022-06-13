@@ -37,7 +37,7 @@ matches_simple <- matches %>%
 
 #write.csv(matches_simple, "data/matches_simple.csv")
 #write.csv(matches, "data/matches.csv")
-write.csv(managers, "data/managers.csv")
+#write.csv(managers, "data/managers.csv")
 
 data360 <- StatsBombFree360Events(MatchesDF = Matches, Parallel = T)
 
@@ -90,7 +90,7 @@ events.location <- events %>%
 events.related_events <- events %>% 
   select(id, type.id, type.name, related_events) %>% 
   unnest(cols = related_events)
-#write.csv(events.related_events, "data/events_relatedEvents.csv")
+#write.csv(events.related_events, "data/unnested_relatedEvents.csv")
 
 events.lineup <- events %>% filter(type.name == "Starting XI") %>%
   select(id, match_id, team.id, team.name, tactics.lineup) %>%
@@ -98,7 +98,7 @@ events.lineup <- events %>% filter(type.name == "Starting XI") %>%
   unnest(cols = lineup) %>%
   select(-id)
   
-#write.csv(events.lineup, "data/events_startingLineups.csv")
+#write.csv(events.lineup, "data/unnested_startingLineups.csv")
 names(events.noNest)
 events.passEndLoc <- events %>% select(id, pass.end_loc)
 events %>% pull(pass.end_location)
@@ -107,7 +107,7 @@ events %>% pull(pass.end_location)
 #what are the different types of events?
 unique(events$type.name)
 
-#filtering down to passes only and reducing variables
+#filtering down to passes only and reducing variables (statsbomb tutorial)
 events.passes = events %>%
   group_by(team.name) %>%
   filter(type.name=="Pass") %>%

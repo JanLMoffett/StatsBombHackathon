@@ -14,6 +14,8 @@ source_url("https://raw.githubusercontent.com/JanLMoffett/datavizExtras/master/e
 tm <- read.csv("data/events_timeMarkers.csv")
 pi <- read.csv("data/events_playerInfo.csv")
 m <- read.csv("data/matches.csv")
+matchIDs <- m %>% arrange(match_date, kick_off) %>% pull(match_id)
+lu <- read.csv("data/unnested_startingLineups.csv")
 
 #Q's:
 #how do i know what game an event is from?    match_id
@@ -61,6 +63,7 @@ names(pi)
 #[31] "TimeInPoss"                    "TimeToPossEnd"                
 #[33] "OpposingTeam"                  "OpposingTeam.id"
 
+
 setdiff(names(pi), names(tm))
 setdiff(names(tm), names(pi))
 #[1] "tactics.formation"             "substitution.outcome.id"      
@@ -85,13 +88,12 @@ tm <- tm %>% rename(ballDropLoc_x = location.x,
          location_y = NULL)
 
 #a plot of all the ball drop locations on the field
-plot_pitch(tm, lineColor = jmbn["mint"]) + bombTurf + 
-  geom_point(aes(x = ballDropLoc_x, y = ballDropLoc_y), color = jmbn["rose"])
+plot_pitch(tm %>% filter(type.name == "Referee Ball-Drop"), lineColor = jmbn["mint"]) + bombTurf + 
+  geom_point(aes(x = ballDropLoc_x, y = ballDropLoc_y), color = jmbn["rose"]) + 
+  labs(title = "Referee Ball-Drop Locations")
 #by match
 
-matchIDs <- m %>% arrange(match_date, kick_off)
-
-plot_pitch(tm %>% filter(match_id == 3788741), lineColor = jmbn["mint"]) + bombTurf + 
+plot_pitch(tm %>% filter(match_id == 3788742), lineColor = jmbn["mint"]) + bombTurf + 
   geom_point(aes(x = ballDropLoc_x, y = ballDropLoc_y, color = factor(match_id)))
 
 sort(head(m$kick_off))
@@ -103,7 +105,7 @@ tm <- tm %>% mutate(timestamp_seconds = seconds(hms(timestamp))) %>%
   mutate(timestamp_seconds = as.numeric(timestamp_seconds))
 
 #rudimentary matchtime_plot
-ggplot(tm) + bombTurf + 
+ggplot(tm) + bombTime + 
   geom_point(aes(x = timestamp_seconds, y = factor(type.name)), 
              shape = "|", size = 4, color = jmbn["periwinkle"]) + 
   facet_wrap(vars(period)) + 
@@ -131,10 +133,81 @@ tm %>% group_by(period) %>%
 
 #timestamps revert to zero at the start of each new period
 
-#how many games have more than 2 periods?
-tm %>% group_by(match_id) %>%
-  summarize(periods = n_distinct(period))
+#which games have more than 2 periods?
+matches_extraTime <- tm %>% group_by(match_id) %>%
+  summarize(
+    periods = n_distinct(period)
+            ) %>%
+  filter(periods > 2) %>%
+  left_join(m, by = "match_id") %>%
+  select(match_id, periods, match_date, 
+         home_team.home_team_name, away_team.away_team_name,
+         home_score, away_score,
+         match_week
+         )
 
-ggplot(tm) + bombTurf + 
-  coord_cartesian(xlim = c(0,3300), ylim = c(0,2000))
+
+ggplot(tm) + bombTime + 
+  coord_cartesian(xlim = c(0,3300), ylim = c(0,2000)) + 
+  geom_rect(aes(xmin = 0, xmax = 3300, ymin = 0, ymax = 2000), fill = NA, color = jmbn["thistle"])
+
+#getting all the players from a match
+#i need a example match id for testing
+matchId_index = 36
+
+this.match = matchIDs[matchId_index]
+
+#rows from matches, player info, and lineups from this match
+m.this <- m %>% filter(match_id == this.match)
+pi.this <- pi %>% filter(match_id == this.match)
+lu.this <- lu %>% filter(match_id == this.match)
+
+#team names
+teamAway <- m.this$away_team.away_team_name
+teamHome <- m.this$home_team.home_team_name
+
+#dfs of starters for each team
+startersAway <- lu.this %>% 
+  filter(team.name == teamAway) %>%
+  select(team.name, player.name, position.name) %>% 
+  mutate(type.name = "Starting XI")
+
+startersHome <- lu.this %>% 
+  filter(team.name == teamHome) %>%
+  select(team.name, player.name, position.name) %>%
+  mutate(type.name = "Starting XI")
+
+unique(pi$type.name)
+
+#the nonstarting players that appeared in the game for each team
+
+#Substitution
+subsAway <- pi.this %>% 
+  filter(type.name == "Substitution", team.name == teamAway) %>% 
+  select(team.name, substitution.replacement.name, position.name, type.name) %>%
+  rename(player.name = substitution.replacement.name)
+
+subsHome <- pi.this %>% 
+  filter(type.name == "Substitution", team.name == teamHome) %>% 
+  select(team.name, substitution.replacement.name, position.name, type.name) %>%
+  rename(player.name = substitution.replacement.name)
+
+#Player On
+playeronAway <- pi.this %>% 
+  filter(type.name == "Player On", team.name == teamAway) %>%
+  select(team.name, player.name, position.name, type.name)
+
+playeronHome <- pi.this %>% 
+  filter(type.name == "Player On", team.name == teamHome) %>%
+  select(team.name, player.name, position.name, type.name)
+
+nstartersAway <- union(subsAway, playeronAway)
+nstartersHome <- union(subsHome, playeronHome)
+
+#putting starters and nonstarters together to get df of all players in the match for each team
+playersAway <- union(startersAway, nstartersAway)
+playersHome <- union(startersHome, nstartersHome)
+
+#I'd like to build a table that has each timestamp in and out for each player, and var for total time on the field
+#goal is to build a kind of gantt chart that has time on the x axis and players on the y axis
 
