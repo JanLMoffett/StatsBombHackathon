@@ -151,63 +151,89 @@ ggplot(tm) + bombTime +
   coord_cartesian(xlim = c(0,3300), ylim = c(0,2000)) + 
   geom_rect(aes(xmin = 0, xmax = 3300, ymin = 0, ymax = 2000), fill = NA, color = jmbn["thistle"])
 
-#getting all the players from a match
+#getting all the players that appeared in each match
 #i need a example match id for testing
 matchId_index = 36
 
-this.match = matchIDs[matchId_index]
+#empty df to save data
+matchPlayersAll <- data.frame(
+  "match_id" = 9999999,
+  "team.name" = "dummy",
+  "player.id" = 9999,
+  "player.name" = "dummy",
+  "position.name" = "dummy",
+  "type.name" = "dummy"
+)
 
-#rows from matches, player info, and lineups from this match
-m.this <- m %>% filter(match_id == this.match)
-pi.this <- pi %>% filter(match_id == this.match)
-lu.this <- lu %>% filter(match_id == this.match)
+for(this.match in matchIDs){
+  #rows from matches, player info, and lineups from this match
+  m.this <- m %>% filter(match_id == this.match)
+  pi.this <- pi %>% filter(match_id == this.match)
+  lu.this <- lu %>% filter(match_id == this.match)
+  
+  #team names
+  teamAway <- m.this$away_team.away_team_name
+  teamHome <- m.this$home_team.home_team_name
+  
+  #dfs of starters for each team
+  startersAway <- lu.this %>% 
+    filter(team.name == teamAway) %>%
+    select(match_id, team.name, player.id, player.name, position.name) %>% 
+    mutate(type.name = "Starting XI")
+  
+  startersHome <- lu.this %>% 
+    filter(team.name == teamHome) %>%
+    select(match_id, team.name, player.id, player.name, position.name) %>%
+    mutate(type.name = "Starting XI")
+  
+  
+  #the nonstarting players that appeared in the game for each team
+  #Substitution
+  subsAway <- pi.this %>% 
+    filter(type.name == "Substitution", team.name == teamAway) %>% 
+    select(match_id, team.name, substitution.replacement.id, substitution.replacement.name, position.name, type.name) %>%
+    rename(player.id = substitution.replacement.id,
+           player.name = substitution.replacement.name)
+  
+  subsHome <- pi.this %>% 
+    filter(type.name == "Substitution", team.name == teamHome) %>% 
+    select(match_id, team.name, substitution.replacement.id, substitution.replacement.name, position.name, type.name) %>%
+    rename(player.id = substitution.replacement.id,
+           player.name = substitution.replacement.name)
+  
+  #Player On
+  playeronAway <- pi.this %>% 
+    filter(type.name == "Player On", team.name == teamAway) %>%
+    select(match_id, team.name, player.id, player.name, position.name, type.name)
+  
+  playeronHome <- pi.this %>% 
+    filter(type.name == "Player On", team.name == teamHome) %>%
+    select(match_id, team.name, player.id, player.name, position.name, type.name)
+  
+  nstartersAway <- union(subsAway, playeronAway)
+  nstartersHome <- union(subsHome, playeronHome)
+  
+  #putting starters and nonstarters together to get df of all players in the match for each team
+  playersAway <- union(startersAway, nstartersAway)
+  playersHome <- union(startersHome, nstartersHome)
+  
+  matchPlayers <- union(playersAway, playersHome)
+  
+  matchPlayersAll <- union(matchPlayersAll, matchPlayers)
+  
+  
+}
 
-#team names
-teamAway <- m.this$away_team.away_team_name
-teamHome <- m.this$home_team.home_team_name
+#removing dummy row and saving
+matchPlayersAll <- matchPlayersAll[-1,]
+write.csv(matchPlayersAll, "data/matchPlayers.csv")
 
-#dfs of starters for each team
-startersAway <- lu.this %>% 
-  filter(team.name == teamAway) %>%
-  select(team.name, player.name, position.name) %>% 
-  mutate(type.name = "Starting XI")
-
-startersHome <- lu.this %>% 
-  filter(team.name == teamHome) %>%
-  select(team.name, player.name, position.name) %>%
-  mutate(type.name = "Starting XI")
-
-unique(pi$type.name)
-
-#the nonstarting players that appeared in the game for each team
-
-#Substitution
-subsAway <- pi.this %>% 
-  filter(type.name == "Substitution", team.name == teamAway) %>% 
-  select(team.name, substitution.replacement.name, position.name, type.name) %>%
-  rename(player.name = substitution.replacement.name)
-
-subsHome <- pi.this %>% 
-  filter(type.name == "Substitution", team.name == teamHome) %>% 
-  select(team.name, substitution.replacement.name, position.name, type.name) %>%
-  rename(player.name = substitution.replacement.name)
-
-#Player On
-playeronAway <- pi.this %>% 
-  filter(type.name == "Player On", team.name == teamAway) %>%
-  select(team.name, player.name, position.name, type.name)
-
-playeronHome <- pi.this %>% 
-  filter(type.name == "Player On", team.name == teamHome) %>%
-  select(team.name, player.name, position.name, type.name)
-
-nstartersAway <- union(subsAway, playeronAway)
-nstartersHome <- union(subsHome, playeronHome)
-
-#putting starters and nonstarters together to get df of all players in the match for each team
-playersAway <- union(startersAway, nstartersAway)
-playersHome <- union(startersHome, nstartersHome)
 
 #I'd like to build a table that has each timestamp in and out for each player, and var for total time on the field
 #goal is to build a kind of gantt chart that has time on the x axis and players on the y axis
+
+#want to build a dataset of player appearances 
+#with a unique row for each time a player appears in a game, timestamps in and out, stats for the appearance
+
+
 
