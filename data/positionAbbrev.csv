@@ -1,0 +1,26 @@
+﻿position_number,position_abbr,position_name
+1,GK,Goalkeeper
+2,RB,Right Back
+3,RCB,Right Center Back
+4,CB,Center Back
+5,LCB,Left Center Back
+6,LB,Left Back
+7,RWB,Right Wing Back
+8,LWB,Left Wing Back
+9,RDM,Right Defensive Midfield
+10,CDM,Center Defensive Midfield
+11,LDM,Left Defensive Midfield
+12,RM,Right Midfield
+13,RCM,Right Center Midfield
+14,CM,Center Midfield
+15,LCM,Left Center Midfield
+16,LM,Left Midfield
+17,RW,Right Wing
+18,RAM,Right Attacking Midfield
+19,CAM,Center Attacking Midfield
+20,LAM,Left Attacking Midfield
+21,LW,Left Wing
+22,RCF,Right Center Forward
+23,ST,Striker
+24,LCF,Left Center Forward
+25,SS,Secondary Striker
