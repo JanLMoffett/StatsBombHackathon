@@ -12,36 +12,12 @@ Comp <- FreeCompetitions()
 Matches <- FreeMatches(Comp)
 Matches <- Matches %>% filter(competition.competition_name=="UEFA Euro")
 
-matches <- Matches %>% select(-all_of(c("home_team.managers", "away_team.managers")))
+Matches2 <- Matches %>% select(-all_of(c("home_team.managers", "away_team.managers")))
 
-#write.csv(matches, "big_data/dbb_matches.csv")
-
-
+#write.csv(Matches2, "big_data/dbb_matches.csv")
 
 #nested variable, home_team.managers from Matches
 managers <- Matches %>% select(home_team.managers, away_team.managers)
-
-str(matches)
-unique(matches$home_team.home_team_name)
-
-matches_simple <- matches %>% 
-  select(match_id,
-         away_team.away_team_name,
-         away_team.away_team_group,
-         home_team.home_team_name,
-         home_team.home_team_group,
-         competition_stage.name,
-         match_week,
-         match_date,
-         kick_off,
-         stadium.name,
-         stadium.country.name
-         ) %>%
-  arrange(match_date, kick_off)
-
-#write.csv(matches_simple, "data/matches_simple.csv")
-#write.csv(matches, "data/matches.csv")
-
 
 data360 <- StatsBombFree360Events(MatchesDF = Matches, Parallel = T)
 
@@ -65,6 +41,7 @@ look_at_df <- function(aDataframe){
     print(paste0(names(aDataframe)[i], " : ", class(aDataframe[[i]])))
   }
   
+  print("")
   print("~ Lists:")
   for(i in seq_along(aDataframe)){
     if(class(aDataframe[[i]]) == "list"){
@@ -74,8 +51,9 @@ look_at_df <- function(aDataframe){
   
 }
 
+#unnest vars from statsBomb360 dataset:
+#----
 look_at_df(data360)
-#unnest vars:
 
 #visible_area
 data360$visible_area[1]
@@ -147,30 +125,44 @@ class(data360$freeze_frame[[1]])
 #these are data frames
 
 data360_ff <- data360 %>% select(id, freeze_frame) %>%
-  unnest(cols = freeze_frame)
-
-head(data360_ff %>% unnest(cols = location))
-data360_ff <- data360_ff %>% unnest(cols = location)
-
-coord_type <- rep(c("x","y"), dim(data360_ff)[1]/2)
-data360_ff$coord_type <- coord_type
+  unnest(cols = freeze_frame) %>% 
+  unnest(cols = location) %>%
+  mutate(coord_type = rep(c("x","y"), dim(data360_ff)[1]/2))
 
 data360_ff.x <- data360_ff %>% filter(coord_type == "x") %>%
-  rename(location_x = location)
+  rename(location_x = location) %>%
+  mutate(one = 1) %>%
+  group_by(id) %>%
+  mutate(ff_player = cumsum(one)) %>%
+  mutate(coord_type = NULL,
+         one = NULL)
+  
 data360_ff.y <- data360_ff %>% filter(coord_type == "y") %>%
-  rename(location_y = location)
+  rename(location_y = location) %>%
+  mutate(one = 1) %>%
+  group_by(id) %>%
+  mutate(ff_player = cumsum(one)) %>%
+  select(-all_of(c("teammate", "actor", "keeper", "one", "coord_type")))
 
-data360_ff <- left_join(data360_ff.x, data360_ff.y %>% select(id, location_y), by = "id")
+data360_ff <- inner_join(data360_ff.x, data360_ff.y, by = c("id", "ff_player"))
 
+#write.csv(data360_ff, "big_data/dbb_data360_freezeFrames.csv")
+#----
 
-
-
-
-
-clook_at_df(events)
+look_at_df(events)
 #unnest vars:
 
 #"related_events"
+relEvents <- events %>% 
+  select(id, related_events) %>% 
+  unnest(cols = "related_events") %>%
+  mutate(one = 1) %>%
+  group_by(id) %>%
+  mutate(related_event_seq = cumsum(one),
+         num_related_events = sum(one)) %>%
+  select(-one)
+
+
 #"location"
 #"tactics.lineup"
 #"pass.end_location"
