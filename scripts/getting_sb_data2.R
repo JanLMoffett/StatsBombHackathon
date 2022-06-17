@@ -13,7 +13,6 @@ Matches <- FreeMatches(Comp)
 Matches <- Matches %>% filter(competition.competition_name=="UEFA Euro")
 
 Matches2 <- Matches %>% select(-all_of(c("home_team.managers", "away_team.managers")))
-
 #write.csv(Matches2, "big_data/dbb_matches.csv")
 
 #nested variable, home_team.managers from Matches
@@ -30,9 +29,6 @@ data360 = data360 %>% rename(id = event_uuid)
 #events = events %>% left_join(data360, by = c("id" = "id"))
 #events = events %>% rename(match_id = match_id.x) %>% select(-match_id.y)
 
-#write.csv(data360, "big_data/dbb_data360.csv")
-#write.csv(events, "big_data/dbb_events.csv")
-
 #what's in the dataset?
 
 look_at_df <- function(aDataframe){
@@ -41,19 +37,24 @@ look_at_df <- function(aDataframe){
     print(paste0(names(aDataframe)[i], " : ", class(aDataframe[[i]])))
   }
   
+  lv <- vector()
+  
   print("")
   print("~ Lists:")
   for(i in seq_along(aDataframe)){
     if(class(aDataframe[[i]]) == "list"){
       print(paste0(names(aDataframe)[i]))
+      lv <- c(lv, names(aDataframe)[i])
     }
   }
+  
+  return(lv)
   
 }
 
 #unnest vars from statsBomb360 dataset:
 #----
-look_at_df(data360)
+lv1 <- look_at_df(data360)
 
 #visible_area
 data360$visible_area[1]
@@ -118,8 +119,6 @@ data360_visibleArea <- full_join(va1, va2, by = "id") %>%
   full_join(va7, by = "id") %>% full_join(va8, by = "id") %>%
   select(-starts_with("coord_seq"))
 
-#write.csv(data360_visibleArea, "big_data/dbb_data360_visibleArea.csv")
-
 #freeze_frame
 class(data360$freeze_frame[[1]])
 #these are data frames
@@ -146,13 +145,33 @@ data360_ff.y <- data360_ff %>% filter(coord_type == "y") %>%
 
 data360_ff <- inner_join(data360_ff.x, data360_ff.y, by = c("id", "ff_player"))
 
+#write.csv(data360_visibleArea, "big_data/dbb_data360_visibleArea.csv")
 #write.csv(data360_ff, "big_data/dbb_data360_freezeFrames.csv")
+
+data360 <- data360 %>% select(-all_of(lv1))
+#this is just id and match_id now
+##write.csv(data360, "big_data/dbb_data360_events_matches.csv")
+
 #----
 
-look_at_df(events)
+lv2 <- look_at_df(events)
 #unnest vars:
 
+#"~ Lists:"
+#[1] "related_events"   X
+#[1] "location"         X
+#[1] "tactics.lineup"   X  
+#[1] "pass.end_location"    X
+#[1] "carry.end_location"   X
+#[1] "shot.end_location"    X
+#[1] "shot.freeze_frame"    X
+#[1] "goalkeeper.end_location" X
+
+unqEvents <- unique(events$id)
+eventTypes <- unique(events$type.name)
+eventTypes
 #"related_events"
+#----
 relEvents <- events %>% 
   select(id, related_events) %>% 
   unnest(cols = "related_events") %>%
@@ -162,122 +181,87 @@ relEvents <- events %>%
          num_related_events = sum(one)) %>%
   select(-one)
 
+max(relEvents$related_event_seq)
+re1 <- relEvents %>% filter(related_event_seq == 1) %>% rename(related_event_1 = related_events)
+re2 <- relEvents %>% filter(related_event_seq == 2) %>% rename(related_event_2 = related_events) %>% select(1:2)
+re3 <- relEvents %>% filter(related_event_seq == 3) %>% rename(related_event_3 = related_events) %>% select(1:2)
+re4 <- relEvents %>% filter(related_event_seq == 4) %>% rename(related_event_4 = related_events) %>% select(1:2)
+re5 <- relEvents %>% filter(related_event_seq == 5) %>% rename(related_event_5 = related_events) %>% select(1:2)
+re6 <- relEvents %>% filter(related_event_seq == 6) %>% rename(related_event_6 = related_events) %>% select(1:2)
+re7 <- relEvents %>% filter(related_event_seq == 7) %>% rename(related_event_7 = related_events) %>% select(1:2)
+re8 <- relEvents %>% filter(related_event_seq == 8) %>% rename(related_event_8 = related_events) %>% select(1:2)
+re9 <- relEvents %>% filter(related_event_seq == 9) %>% rename(related_event_9 = related_events) %>% select(1:2)
 
-#"location"
-#"tactics.lineup"
-#"pass.end_location"
-#"carry.end_location"
-#"shot.end_location"
-#"shot.freeze_frame"
-#"goalkeeper.end_location"
+re <- re1 %>% left_join(re2, by = "id") %>% left_join(re3, by = "id") %>%
+  left_join(re4, by = "id") %>% left_join(re5, by = "id") %>%
+  left_join(re6, by = "id") %>% left_join(re7, by = "id") %>% 
+  left_join(re8, by = "id") %>% left_join(re9, by = "id") %>% 
+  select(-related_event_seq)
 
-
-#taking out nested variables
-events.noNest <- events %>% 
-  select(-all_of(listVars))
-
-#write.csv(events.noNest, "data/events_noNestedVars.csv")
-
-#unnest each of the nested vars and make them joinable by event id
-
-events.location <- events %>% 
-  select(id, location) %>%
-  unnest(cols = location) %>%
-  group_by(id) %>%
-  mutate(location_x = first(location),
-         location_y = last(location)) %>%
-  summarize(
-    id = first(id),
-    location_x = first(location_x),
-    location_y = first(location_y)
-  ) %>% ungroup()
-
-events.related_events <- events %>% 
-  select(id, type.id, type.name, related_events) %>% 
-  unnest(cols = related_events)
-#write.csv(events.related_events, "data/unnested_relatedEvents.csv")
-
-events.lineup <- events %>% filter(type.name == "Starting XI") %>%
-  select(id, match_id, team.id, team.name, tactics.lineup) %>%
-  rename(lineup = tactics.lineup) %>%
-  unnest(cols = lineup) %>%
-  select(-id)
-  
-#write.csv(events.lineup, "data/unnested_startingLineups.csv")
-names(events.noNest)
-events.passEndLoc <- events %>% select(id, pass.end_loc)
-events %>% pull(pass.end_location)
-
-
-#what are the different types of events?
-unique(events$type.name)
-
-#filtering down to passes only and reducing variables (statsbomb tutorial)
-events.passes = events %>%
-  group_by(team.name) %>%
-  filter(type.name=="Pass") %>%
-  select(id, match_id, team.name, OpposingTeam, player.name, type.name, minute, second, location.x, location.y, pass.end_location.x, pass.end_location.y, pass.type.name, pass.cross, freeze_frame)
-
-events.passes = events.passes %>% unnest(freeze_frame) %>%
-  mutate(ff_location.x = (map(location, 1)), 
-         ff_location.y = (map(location, 2))) %>%
-  select(-location) %>%
-  mutate(ff_location.x = as.numeric(ifelse(ff_location.x == "NULL", NA, ff_location.x)), 
-         ff_location.y = as.numeric(ifelse(ff_location.y == "NULL", NA, ff_location.y)))
-
-
-
-#this is me:
-ggplot(ffs %>% filter(match_id == 3788741)) +
-  geom_point(aes(x = location.x, y = location.y)) + 
-  geom_point(aes(x = ff_location.x, y = ff_location.y), color = "blue")
-
-length(unique(ffs$id))
-thisEvent <- unique(ffs$id)[651]
-
-
-
-t <- ffs %>% filter(id == thisEvent)
-
-ggplot(t) +
-  geom_point(aes(x = location.x, y = location.y), color = "purple", shape = 22) +
-  geom_point(aes(x = pass.end_location.x, y = pass.end_location.y), color = "red", shape = 15) +
-  geom_segment(aes(x = location.x, xend = pass.end_location.x, y = location.y, yend = pass.end_location.y), color = "purple") +
-  geom_point(aes(x = ff_location.x, y = ff_location.y), color = "blue")
-
-
+#write.csv(re, "big_data/dbb_events_relatedEvents.csv")
 #----
 
+#"tactics.lineup"
+View(events %>% filter(type.name == "Starting XI") %>% select(id, tactics.lineup))
+lu <- events %>% filter(type.name == "Starting XI") %>% select(id, match_id, tactics.lineup) %>%
+  unnest(cols = tactics.lineup)
 
-#what's in the data?
+#write.csv(lu, "big_data/dbb_events_startingXI.csv")
 
-#Comp
-str(Comp) #this is to look up id for UEFA Euro 2020
+#"shot.freeze_frame"
+#----
+View(events %>% filter(type.name == "Shot") %>% select(id, shot.freeze_frame))
 
-#str function produces huge output
-for(i in seq_along(ffs)){
-  print(paste0(names(ffs)[i], " : ", class(ffs[[i]])))
-}
+sff <- events %>% filter(type.name == "Shot") %>% select(id, match_id, shot.freeze_frame)
+sff2 <- sff %>% unnest(cols = shot.freeze_frame)
+sff2 <- sff2 %>% mutate(one = 1) %>%
+  group_by(id) %>%
+  mutate(shotFF_player_seq = cumsum(one),
+         shotFF_num_players = sum(one)) %>% ungroup()
 
+sff2.loc <- sff2 %>% select(id, shotFF_player_seq, location) %>% unnest(cols = location)
+sff2.loc$coord_type <- rep(c("x", "y"), dim(sff2.loc)[1]/2)
+sff2.loc.x <- sff2.loc %>% filter(coord_type == "x") %>% select(id, shotFF_player_seq, location) %>% rename(shotFF_player_location_x = location)
+sff2.loc.y <- sff2.loc %>% filter(coord_type == "y") %>% select(id, shotFF_player_seq, location) %>% rename(shotFF_player_location_y = location)
+sff2.loc <- inner_join(sff2.loc.x, sff2.loc.y, by = c("id", "shotFF_player_seq"))
 
-#data360----
-names(data360)
-#str function produces huge output
-for(i in seq_along(data360)){
-  print(paste0(names(data360)[i], " : ", class(data360[[i]])))
-}
+sff2 <- sff2 %>% select(-all_of(c("location", "one")))
+sff3 <- sff2 %>% inner_join(sff2.loc, by = c("id", "shotFF_player_seq"))
 
-#visible area and freeze frame are big lists
-visible_area <- data360$visible_area
-#list of numeric vectors with about 12 entries for each observation
+#write.csv(sff3, "big_data/dbb_events_shotFreezeFrames.csv")
+#----
 
-freeze_frame <- data360$freeze_frame
-freeze_frame[[]]
+#"goalkeeper.end_location"
+#----
+View(events %>% filter(str_detect(type.name, "Goal")) %>% select(id, type.name, goalkeeper.end_location))
+gk <- events %>% filter(str_detect(type.name, "Goal")) %>% select(id, type.name, goalkeeper.end_location)
 
-#id
-data360[[1]]
+gk <- gk %>% unnest(cols = goalkeeper.end_location)
+coord_type <- rep(c("x", "y"), dim(gk)[1]/2)
+gk$coord_type <- coord_type
+gk.x <- gk %>% filter(coord_type == "x") %>% rename(gk.end_location_x = goalkeeper.end_location) %>% select(-all_of(c("coord_type", "type.name")))
+gk.y <- gk %>% filter(coord_type == "y") %>% rename(gk.end_location_y = goalkeeper.end_location) %>% select(-all_of(c("coord_type", "type.name")))
+gk <- inner_join(gk.x, gk.y, by = "id")
 
-#visible_area
-data360[[2]]
+#write.csv(gk, "big_data/dbb_events_gkEndLocation.csv")
+#----
 
-#end data360----
+#already unnested into vars in the table:
+
+#"location"
+View(events %>% select(id, location, location.x, location.y))
+
+#"pass.end_location"
+View(events %>% select(id, pass.end_location, pass.end_location.x, pass.end_location.y))
+
+#"carry.end_location"
+View(events %>% select(id, carry.end_location, carry.end_location.x, carry.end_location.y))
+
+#"shot.end_location"
+View(events %>% select(id, shot.end_location, shot.end_location.x, shot.end_location.y, shot.end_location.z))
+
+#events set without nested variables
+events.noNest <- events %>% 
+  select(-all_of(lv2))
+#write.csv(events.noNest, "big_data/dbb_events.csv")
+
