@@ -1,6 +1,7 @@
 #folders to ignore
 reference/
 big_data/
+app/app_data/
 
 # History files
 .Rhistory
