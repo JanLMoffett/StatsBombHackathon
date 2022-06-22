@@ -6,6 +6,7 @@ posAb <- read.csv("functions_etc/positionDisplay.csv")
 
 
 plot_pos_on_pitch <- function(){
+  require(ggplot2)
   
   plot_pitch(lineColor = shUEFA["blueLt"]) + shUEFA_theme + 
     theme(axis.title = element_blank(),

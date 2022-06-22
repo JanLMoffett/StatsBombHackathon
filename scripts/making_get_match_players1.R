@@ -128,9 +128,6 @@ matchPlayersAll <- data.frame(
 )
 
 
-
-
-
 #removing dummy row and saving
 matchPlayersAll <- matchPlayersAll[-1,]
 

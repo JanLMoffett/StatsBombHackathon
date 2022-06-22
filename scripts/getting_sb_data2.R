@@ -203,7 +203,7 @@ re <- re1 %>% left_join(re2, by = "id") %>% left_join(re3, by = "id") %>%
 
 #"tactics.lineup"
 View(events %>% filter(type.name == "Starting XI") %>% select(id, tactics.lineup))
-lu <- events %>% filter(type.name == "Starting XI") %>% select(id, match_id, tactics.lineup) %>%
+lu <- events %>% filter(type.name == "Starting XI") %>% select(id, match_id, team.id, team.name, tactics.lineup) %>%
   unnest(cols = tactics.lineup)
 
 #write.csv(lu, "big_data/dbb_events_startingXI.csv")

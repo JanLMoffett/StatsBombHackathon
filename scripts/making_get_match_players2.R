@@ -1,8 +1,6 @@
 
 #this is a function to take a match id and get a full list of players on each
-#team, along with their transformed timestamps, ready to plot on timeline
-
-#this code originated in exploring_data__time_markers.R
+#team
 
 library(tidyverse)
 library(devtools)
@@ -16,195 +14,121 @@ source_url("https://raw.githubusercontent.com/JanLMoffett/datavizExtras/master/c
 source_url("https://raw.githubusercontent.com/JanLMoffett/datavizExtras/master/extraThemes.R")
 
 source("functions_etc/bombViz.R")
-
-#subsets of events dataset
-
-#all possible positions
-sort(unique(pi$position.name))
-posNames <- sort(unique(ev1$position.name))
+source("functions_etc/timestamp_to_seconds.R")
 
 #matches dataset
-m <- read.csv("data/matches.csv")
+m <- read.csv("big_data/dbb_matches.csv")
+#list of unique match ID's from UEFA CL 2020
 matchIDs <- m %>% arrange(match_date, kick_off) %>% pull(match_id)
+
+#events dataset
+ev <- read.csv("big_data/dbb_events.csv")
+
 #unnested starting XI dataframes
-lu <- read.csv("data/unnested_startingLineups.csv")
-posAbbr <- read.csv("data/positionAbbrev.csv")
-names(posAbbr)[1] <- "position_number"
+lu <- read.csv("big_data/dbb_events_startingXI.csv")
+
+#position display table i made in making_plot_pos_on_pitch.R
+pd <- read.csv("functions_etc/positionDisplay.csv")
 
 
-#positions and abbreviations ---------------------------------------------------
+# ~ ~ ~ ~ ~ ~ ~ # Pick a Match ID # ~ ~ ~ ~ ~ ~ ~ #
+#b <- sample(1:51, 1)
+b = 26
+thisMatchID = matchIDs[b]
+# ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ #
 
-#appearing in abbr set but not events:
-setdiff(posAbbr$position_name, posNames)
-#[1] "Center Midfield"   "Striker"  "Secondary Striker"
+#filter sets to chosen match id
+this.match <- m %>% filter(match_id == thisMatchID)
+this.ev <- ev %>% filter(match_id == thisMatchID)
 
-#appearing in events but not abbr:
-setdiff(posNames, posAbbr$position_name)
-#NA
+#move to another file 
+# |
+# v
+#narrow down variables to display
+matchDisplayVars <- c(
+  "competition.competition_name",
+  "season.season_name",
+  "competition_stage.name",
+  "stadium.name","stadium.country.name",
+  "referee.name",
+  "match_date", "kick_off", 
+  "away_team.away_team_name", "away_team.away_team_group",
+  "away_score", 
+  "home_team.home_team_name", "home_team.home_team_group",
+   "home_score")
 
-#creating an index of all unique pos from the dataset, with nums and abbrs
-posAb <- posAbbr %>% filter(position_name %in% posNames) %>% select(-position_number)
+#display info about the match
+t(this.match %>% select(all_of(matchDisplayVars)))
+# ^
+# |
 
-posAb2 <- ev1 %>% group_by(position.id) %>%
-  summarize(position.name = first(position.name)) %>%
-  left_join(posAb, by = c("position.name" = "position_name")) %>%
-  filter(!is.na(position.id))
+#Starters for match
+starters <- lu %>% filter(match_id == thisMatchID)
 
-#coordinates to display positions on pitch
-display_x <- c("position_column_1", rep("position_column_2", 5), 
-               rep("position_column_3", 5), rep("position_column_4", 4),
-               rep("position_column_5", 5), rep("position_column_6", 3))
-display_y <- c("position_row_3", 
-               "position_row_1", "position_row_2", "position_row_3", "position_row_4", "position_row_5",
-               "position_row_1", "position_row_2", "position_row_3", "position_row_4", "position_row_5",
-               "position_row_1", "position_row_2", "position_row_4", "position_row_5",
-               "position_row_1", "position_row_2", "position_row_3", "position_row_4", "position_row_5",
-               "position_row_2", "position_row_3", "position_row_4")
-posAb2$display_x <- display_x
-posAb2$display_y <- display_y
-
-posAb2$display_x.gkLt <- NA
-posAb2$display_y.gkLt <- NA
-
-posAb2 <- posAb2 %>% 
-  mutate(
-    display_x.gkLt = case_when(
-      display_x == "position_column_1"
-    
-  ))
-
-
-#coordinates to display positions on pitch
-position_column_1 = 9
-position_column_2 = 25
-position_column_3 = 42
-position_column_4 = 60
-position_column_5 = 78
-position_column_6 = 95
-
-position_row_1 = 13
-position_row_2 = 26
-position_row_3 = 40
-position_row_4 = 53
-position_row_5 = 66
-
-
-this.match = matchIDs[34]
-
-t(m %>% filter(match_id == this.match))
-
-
-
-#a function to take a timestamp string in "00:00:00.000" format and covert to numeric seconds
-timestamp_to_seconds <- function(timestampStr){
-  
-  r1 <- as.numeric(seconds(hms(timestampStr)))
-  
-  return(r1)
-  
-}
-
-#transforming timestamp var so i can plot it on x axis
-ev1 <- ev1 %>% mutate(timestamp_seconds = timestamp_to_seconds(timestamp))
-nzv <- nearZeroVar(ev1, saveMetrics = T)
-remove <- which(nzv$zeroVar == T)
-ev1 <- ev1 %>% select(-all_of(remove))
-
-
-set.seed(3); this.match = matchIDs[sample(1:length(matchIDs), 1)]
-
-#filter down to the match in question----------------------------------------------
-ev2 <- ev1 %>% filter(match_id == this.match)
-
-#info about this match (df with 1 row)
-match_info <- m %>% filter(match_id == this.match)
-
-#info about the periods in this match
-per_info <- ev2 %>% group_by(period) %>%
-  summarize(per_end = max(timestamp_seconds, na.rm = T)
-            ) %>%
-  mutate(per_div = cumsum(per_end))
-
-#team names
-teamAway <- match_info$away_team.away_team_name
-teamHome <- match_info$home_team.home_team_name
-
-#info about the starting xi for each team
-starters_info <- lu %>% filter(match_id == this.match)
-starters_info <- starters_info %>% left_join(posAbbr[,2:3], by = c("position.name" = "position_name"))
-starterIDs <- starters_info %>% pull(player.id)
-
-subs_info <- ev2 %>% filter(type.name == "Substitution")
-
-#players who came in as subs
-subbedOnIDs <- subs_info %>% pull(substitution.replacement.id)
-
-
-#dfs of starters for each team
-startersAway <- starters_info %>% filter(team.name == teamAway)
-startersHome <- starters_info %>% filter(team.name == teamHome)
-
-#the nonstarting players that appeared in the game for each team
-#Substitution
-subsAway <- subs_info %>% filter(team.name == teamAway)
-subsHome <- subs_info %>% filter(team.name == teamHome)
-
-
-subsHome <- pi.this %>% 
-  filter(type.name == "Substitution", team.name == teamHome) %>% 
-  select(match_id, team.name, substitution.replacement.id, substitution.replacement.name, position.name, type.name) %>%
-  rename(player.id = substitution.replacement.id,
-         player.name = substitution.replacement.name)
+#Substitutions for match
+subs <- this.ev %>% filter(type.name == "Substitution")
 
 #Player On
-playeronAway <- pi.this %>% 
-  filter(type.name == "Player On", team.name == teamAway) %>%
-  select(match_id, team.name, player.id, player.name, position.name, type.name)
+playerOn <- this.ev %>% filter(type.name == "Player On")
 
-playeronHome <- pi.this %>% 
-  filter(type.name == "Player On", team.name == teamHome) %>%
-  select(match_id, team.name, player.id, player.name, position.name, type.name)
-
-nonstartersAway <- union(subsAway, playeronAway)
-nonstartersHome <- union(subsHome, playeronHome)
-
-#putting starters and nonstarters together to get df of all players in the match for each team
-playersAway <- union(startersAway, nstartersAway)
-playersHome <- union(startersHome, nstartersHome)
-
-matchPlayers <- union(playersAway, playersHome)
-
-matchPlayersAll <- union(matchPlayersAll, matchPlayers)
-
-#empty df for all players in match
-matchPlayersAll <- data.frame(
-  "match_id" = 9999999,
-  "team.name" = "dummy",
-  "player.id" = 9999,
-  "player.name" = "dummy",
-  "position.name" = "dummy",
-  "type.name" = "dummy"
-)
+#Player Off
+playerOff <- this.ev %>% filter(type.name == "Player Off")
 
 
+#building match_players df, starting with starters
+match_players <- starters %>% mutate(period_on = 1, timestamp_on = "00:00:00.000", X = NULL, type.name = "Starting XI")
+#variables i want in the match_players df
+mpVars <- names(match_players)
+#[1] "id"            "match_id"      "team.id"       "team.name"     "jersey_number"
+#[6] "player.id"     "player.name"   "position.id"   "position.name" "period_on"   timestamp_on" 
+#[11] "period_off"  "timestamp_off"   "type.name"
+match_players <- match_players %>% select(all_of(mpVars))
+
+#add players who came in as substitutions to the df
+subOn <- subs %>% select(id, match_id, team.id, team.name, 
+                         substitution.replacement.id, substitution.replacement.name, 
+                         position.id, position.name, period, timestamp, type.name) %>%
+  rename(period_on = period,
+         timestamp_on = timestamp,
+         player.id = substitution.replacement.id,
+         player.name = substitution.replacement.name) %>%
+  mutate(jersey_number = NA)
+
+subOn <- subOn %>% select(all_of(mpVars))
+
+plyrOn <- playerOn %>% select(id, match_id, team.id, team.name, 
+                              player.id, player.name, 
+                              position.id, position.name, period, timestamp, type.name) %>%
+  rename(period_on = period, timestamp_on = timestamp) %>%
+  mutate(jersey_number = NA)
+
+plyrOn <- plyrOn %>% select(all_of(mpVars))
+
+#combine into df of all players
+match_players <- union(match_players, subOn) %>% union(plyrOn)
+
+match_players
 
 
+#fill in period off and timestamp_off variables
 
-#removing dummy row and saving
-matchPlayersAll <- matchPlayersAll[-1,]
+subOff <- subs %>% select(player.id, period, timestamp) %>%
+  rename(period_off = period,
+         timestamp_off = timestamp)
 
-matchPlayersAll
+plyrOff <- playerOff %>% select(player.id, period, timestamp) %>%
+  rename(period_off = period,
+         timestamp_off = timestamp)
 
+subOff <- union(subOff, plyrOff)
 
-max_ts <- max(ev1 %>% filter(match_id == this.match) %>% pull(timestamp_seconds))
-max_per <- max(ev1 %>% filter(match_id == this.match) %>% pull(period))
+match_players <- left_join(match_players, subOff, by = "player.id")
 
-#see if any players in the match have "player off" type
-playerOffIDs <- ev1 %>% filter(match_id == this.match, type.name == "Player Off") %>% pull(player.id)
-subbedOffIDs <- ev1 %>% filter(match_id == this.match, type.name == "Substitution") %>% pull(player.id)
+maxPeriod <- max(this.ev$period, na.rm = T)
+maxTimestamp <- max(this.ev$timestamp[which(this.ev$period == maxPeriod)])
 
-mpa <- matchPlayersAll %>% mutate(is_playerOff = ifelse(player.id %in% playerOffIDs, 1, 0)) %>% 
-  mutate(is_subbedOff = ifelse(player.id %in% subbedOffIDs, 1, 0))
-
+match_players <- match_players %>% 
+  mutate(period_off = ifelse(is.na(period_off), maxPeriod, period_off),
+         timestamp_off = ifelse(is.na(timestamp_off), maxTimestamp, timestamp_off))
 
 

@@ -2,7 +2,7 @@
 library(tidyverse)
 library(devtools)
 
-function(hexCode){
+hex <- function(hexCode){
   
   u <- as.character(hexCode)
   #make sure input is six digits long, letters and numbers only
@@ -13,20 +13,28 @@ function(hexCode){
   return(rgb(t(col2rgb(u)), maxColorValue = 255))
 }
 
-#blank soccer pitch!!!
-blank_pitch <- ggplot() +
-  annotate("rect",xmin = 0, xmax = 120, ymin = 0, ymax = 80, fill = NA, colour = "black", size = 0.6) +
-  annotate("rect",xmin = 0, xmax = 60, ymin = 0, ymax = 80, fill = NA, colour = "black", size = 0.6) +
-  annotate("rect",xmin = 18, xmax = 0, ymin = 18, ymax = 62, fill = NA, colour = "black", size = 0.6) +
-  annotate("rect",xmin = 102, xmax = 120, ymin = 18, ymax = 62, fill = NA, colour = "black", size = 0.6) +
-  annotate("rect",xmin = 0, xmax = 6, ymin = 30, ymax = 50, fill = NA, colour = "black", size = 0.6) +
-  annotate("rect",xmin = 120, xmax = 114, ymin = 30, ymax = 50, fill = NA, colour = "black", size = 0.6) +
-  annotate("rect",xmin = 120, xmax = 120.5, ymin =36, ymax = 44, fill = NA, colour = "black", size = 0.6) +
-  annotate("rect",xmin = 0, xmax = -0.5, ymin =36, ymax = 44, fill = NA, colour = "black", size = 0.6) +
-  annotate("segment", x = 60, xend = 60, y = -0.5, yend = 80.5, colour = "black", size = 0.6)+
-  annotate("segment", x = 0, xend = 0, y = 0, yend = 80, colour = "black", size = 0.6)+
-  annotate("segment", x = 120, xend = 120, y = 0, yend = 80, colour = "black", size = 0.6)
+transpa <- function(colorObject, alpha1to255){
+  return(rgb(t(col2rgb(colorObject)), maxColorValue = 255, alpha = alpha1to255))
+}
 
+#blank soccer pitch!!! from statsbomb pdf on UEFA 2020 data
+blank_pitch <- function(){
+  ggplot() +
+    annotate("rect",xmin = 0, xmax = 120, ymin = 0, ymax = 80, fill = NA, colour = "black", size = 0.6) +
+    annotate("rect",xmin = 0, xmax = 60, ymin = 0, ymax = 80, fill = NA, colour = "black", size = 0.6) +
+    annotate("rect",xmin = 18, xmax = 0, ymin = 18, ymax = 62, fill = NA, colour = "black", size = 0.6) +
+    annotate("rect",xmin = 102, xmax = 120, ymin = 18, ymax = 62, fill = NA, colour = "black", size = 0.6) +
+    annotate("rect",xmin = 0, xmax = 6, ymin = 30, ymax = 50, fill = NA, colour = "black", size = 0.6) +
+    annotate("rect",xmin = 120, xmax = 114, ymin = 30, ymax = 50, fill = NA, colour = "black", size = 0.6) +
+    annotate("rect",xmin = 120, xmax = 120.5, ymin =36, ymax = 44, fill = NA, colour = "black", size = 0.6) +
+    annotate("rect",xmin = 0, xmax = -0.5, ymin =36, ymax = 44, fill = NA, colour = "black", size = 0.6) +
+    annotate("segment", x = 60, xend = 60, y = -0.5, yend = 80.5, colour = "black", size = 0.6)+
+    annotate("segment", x = 0, xend = 0, y = 0, yend = 80, colour = "black", size = 0.6)+
+    annotate("segment", x = 120, xend = 120, y = 0, yend = 80, colour = "black", size = 0.6)
+  
+}
+  
+#my function for plotting a blank pitch
 plot_pitch <- function(data = NULL, lineColor = "black"){
   
   ggp <- ggplot(data = data) +
@@ -110,7 +118,6 @@ shUEFA_theme <- theme(
   complete = FALSE,
   validate = TRUE
 )
-
 
 bombTurf <- theme(
   
