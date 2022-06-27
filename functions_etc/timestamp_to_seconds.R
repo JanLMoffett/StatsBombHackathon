@@ -48,28 +48,27 @@ get_cumulative_match_seconds <- function(MatchEventsDF){
 
 #takes match players and match events df and returns match players df with 
 #cumulative seconds on and off vars added
-get_cumulative_ts_on_off <- function(MatchPlayersDF, MatchEventsDF){
+get_cumulative_ts_on_off <- function(MatchPlayersDF, periodSummary){
   
-  this.per <- get_period_summary(MatchEventsDF)
+  ret.mp <- MatchPlayersDF %>% 
+    mutate(ts_on_seconds = timestamp_to_seconds(timestamp_on),
+           ts_off_seconds = timestamp_to_seconds(timestamp_off)) 
   
-  mp <- MatchPlayersDF %>% mutate(ts_on_seconds = timestamp_to_seconds(timestamp_on),
-                                  ts_off_seconds = timestamp_to_seconds(timestamp_off)) 
-  
-  mp <- MatchPlayersDF %>% mutate(
+  ret.mp <- ret.mp %>% mutate(
     ts_on_cum_seconds = case_when(
       period_on == 1 ~ ts_on_seconds,
-      period_on == 2 ~ ts_on_seconds + this.per$total_seconds[1],
-      period_on == 3 ~ ts_on_seconds + sum(this.per$total_seconds[1:2]),
-      period_on == 4 ~ ts_on_seconds + sum(this.per$total_seconds[1:3]),
-      period_on == 5 ~ ts_on_seconds + sum(this.per$total_seconds[1:4])),
+      period_on == 2 ~ ts_on_seconds + periodSummary$total_seconds[1],
+      period_on == 3 ~ ts_on_seconds + sum(periodSummary$total_seconds[1:2]),
+      period_on == 4 ~ ts_on_seconds + sum(periodSummary$total_seconds[1:3]),
+      period_on == 5 ~ ts_on_seconds + sum(periodSummary$total_seconds[1:4])),
     ts_off_cum_seconds = case_when(
       period_off == 1 ~ ts_off_seconds,
-      period_off == 2 ~ ts_off_seconds + this.per$total_seconds[1],
-      period_off == 3 ~ ts_off_seconds + sum(this.per$total_seconds[1:2]),
-      period_off == 4 ~ ts_off_seconds + sum(this.per$total_seconds[1:3]),
-      period_off == 5 ~ ts_off_seconds + sum(this.per$total_seconds[1:4])))
+      period_off == 2 ~ ts_off_seconds + periodSummary$total_seconds[1],
+      period_off == 3 ~ ts_off_seconds + sum(periodSummary$total_seconds[1:2]),
+      period_off == 4 ~ ts_off_seconds + sum(periodSummary$total_seconds[1:3]),
+      period_off == 5 ~ ts_off_seconds + sum(periodSummary$total_seconds[1:4])))
   
-  return(mp)
+  return(ret.mp)
   
 }
 
