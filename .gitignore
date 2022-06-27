@@ -2,7 +2,7 @@
 reference/
 big_data/
 app/app_data/
-app/
+#app/
 
 # History files
 .Rhistory
