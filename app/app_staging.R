@@ -1,31 +1,48 @@
 
+#library(StatsBombR)
 library(shinydashboard)
 library(shiny)
 library(tidyverse)
 library(devtools)
 library(lubridate)
 
+#source("app_functions/scrape_StatsBomb.R")
 source("app_functions/bombViz.R")
 source("app_functions/timestamp_to_seconds.R")
 source("app_functions/get_match_players.R")
 source("app_functions/get_match_info_table.R")
 
-
-#get data
+#position abbreviations and display coordinates
 posAb <- read.csv("app_functions/positionDisplay.csv")
-#rel_ev <- read.csv("big_data/dbb_events_relatedEvents.csv")
 
-#will need functions to pull and transform data from the api to get these datasets:
-#Matches
-m <- read.csv("app_data/dbb_matches.csv", encoding = "UTF-8")
-#Events
-ev <- read.csv("app_data/dbb_events.csv", encoding = "latin1")
-#Unnested starting lineups
-lu <- read.csv("app_data/dbb_events_startingXI.csv", encoding = "latin1")
+
+# ||=||=||@||=||=||=||=||=||@||=||=||=||=||=||@||=||=||=||=||=||@||=||=||=
+#                               Get Data
+# ||=||=||@||=||=||=||=||=||@||=||=||=||=||=||@||=||=||=||=||=||@||=||=||=
 
 #since there is only one competition used in hackathon data, pulling data from
-#api isn't reactive, just once at the beginning.  ideally, dashboard will be more
-#agile and usable with any available StatsBomb360 competition dataset
+#api isn't reactive, just once at the beginning.  ideally, dashboard will be
+#usable with any available StatsBomb360 competition dataset
+
+#Matches
+#m <- scrape_matches(compName = "UEFA Euro")
+m <- read.csv("app_data/dbb_matches.csv")
+
+#Events (with nested vars)
+#ev_og <- scrape_events(m)
+
+#Unnested starting lineups
+#lu <- get_startingXI(ev_og)
+lu <- read.csv("app_data/dbb_events_startingXI.csv")
+
+#related events
+#rel_ev <- get_related_events(ev_og)
+
+#events without nested vars
+#ev <- get_stripped_events(ev_og)
+ev <- read.csv("app_data/dbb_events.csv")
+
+#ev_og <- NULL
 
 #list of unique match_id values 
 matchIDs <- unique(m$match_id)
@@ -38,7 +55,6 @@ eventTypes <- unique(ev$type.name)
 #transforming timestamp var so i can plot it on x axis
 ev <- ev %>% mutate(timestamp_seconds = timestamp_to_seconds(timestamp))
 ev <- get_cumulative_match_seconds(ev)
-
 
 #functions
 get_match_player_table <- function(matchPlayersDF){
@@ -56,67 +72,68 @@ get_match_player_table <- function(matchPlayersDF){
 }
 
 
-ui <- dashboardPage(
+ui <- fluidPage(
   
-  #header * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ *  
-  dashboardHeader(
-    title = "StatsBomb 360"
-  ),
-  
-  #sidebar * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ *  
-  dashboardSidebar(
-    #match selection input
-    selectInput("match_select", "Select Match:", matchIDs, selectize = F),
-    
-    #statview selection input
-    #selectInput("event_select", "Select Event:", eventTypes, selectize = F)
-    selectInput("event_select", "Select Event:", 
-                c("Pass","Interception","Shot","Carry","Dribble","Miscontrol","Clearance"), 
-                selectize = F)
-    
-  ),
-  
-  #body * ~ * ~ * ~ * ~ * ~ * ~ * ~ * ~ *  
-  dashboardBody(
-    fluidPage(
-    
-    #row containing match info and pitch plot
-    fluidRow(
-      column(width = 4,
-        box(width = 12,
-          #match info output
-          tableOutput("match_info")
-          )
-        ),
-      column(width = 8,
-        fluidRow(width = 12,
-          box(width = 12,
-            #pitch plot output
-            plotOutput("pitch_plot")
-          )),
+  tags$head(
+    # Note the wrapping of the string in HTML()
+    tags$style(HTML("
+      @import url('https://fonts.googleapis.com/css2?family=Dosis&display=swap');
+      body {
+        background-color: #473c85;
+        color: white;
+      }
+      h2 {
+        font-family: 'Dosis', sans-serif;
+      }
+      .shiny-html-output {
+        background-color: #10006b;
+      }
+      .shiny-input-container {
+        color: #341cbd;
         
-        #this needs to react to the match id
-        fluidRow(width = 12,
-          box(width = 12,
-            sliderInput("time_slider", "Match Timestamp (Seconds):", 0, 5000, 0)
-          )
-        )
-      )
+      }"))
+  ),
+  
+  titlePanel("StatsBomb 360"
+             
+             ),
+  
+  sidebarLayout(
+    
+    sidebarPanel(
+      
+      #match selection input
+      selectInput("match_select", "Select Match:", matchIDs, selectize = F),
+      
+      #match info output
+      tableOutput("match_info"),
+      
+      #statview selection input
+      #selectInput("event_select", "Select Event:", eventTypes, selectize = F)
+      selectInput("event_select", "Select Event:", 
+                  c("Pass","Interception","Shot","Carry","Dribble","Miscontrol","Clearance"), 
+                  selectize = F)
+      
     ),
     
-    #row containing rosters and timeline plot
-    fluidRow(
+    mainPanel(
       
-      box(width = 12,
+      fluidRow(
+        plotOutput("pitch_plot")
         
+      ),
+      
+      fluidRow(
         plotOutput("timeline_plot", height = 600)
         
       )
     )
-      
   )
 )
-)
+
+    
+    
+  
   
 
 
@@ -254,6 +271,7 @@ server <- function(input, output){
 
 
 shinyApp(ui, server)
+
 
 
 
