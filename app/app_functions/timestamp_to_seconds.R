@@ -22,7 +22,8 @@ get_period_summary <- function(MatchEventsDF){
   
   per <- MatchEventsDF %>% group_by(period) %>%
     summarize(max_ts = max(timestamp, na.rm = T)) %>% 
-    mutate(total_seconds = timestamp_to_seconds(max_ts))
+    mutate(total_seconds = timestamp_to_seconds(max_ts)) %>%
+    mutate(cum_total_seconds = cumsum(total_seconds))
   
   return(per)
   

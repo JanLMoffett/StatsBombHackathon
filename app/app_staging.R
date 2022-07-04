@@ -9,7 +9,7 @@ library(lubridate)
 #source("app_functions/scrape_StatsBomb.R")
 source("app_functions/bombViz.R")
 source("app_functions/timestamp_to_seconds.R")
-source("app_functions/get_match_players.R")
+source("app_functions/get_match_players2.R")
 source("app_functions/get_match_info_table.R")
 
 #position abbreviations and display coordinates
@@ -154,11 +154,35 @@ server <- function(input, output){
     mp <- mp %>% left_join(posAb %>% select(position.id, position_abbr), by = "position.id")
     
     #filter matches and events datasets
-    cur_m <- m %>% filter(match_id == input$match_select)
-    cur_ev <- ev %>% filter(match_id == input$match_select)
+    this.m <- m %>% filter(match_id == input$match_select)
+    this.ev <- ev %>% filter(match_id == input$match_select)
+    
+    #period start and end times
+    pers <- get_period_summary(this.ev)
+    
+    #transform timestamps into cumulative seconds
+    this.ev <- get_cumulative_match_seconds(this.ev)
+    
+    
+    #assign a y value to each player in match
+    mp <- mp %>% arrange(home_or_away, position.id, ts_on_cum_seconds) %>%
+      mutate(timeline_y = seq(dim(mp)[1], 1, -1)) %>%
+      mutate(timeline_y = ifelse(home_or_away == "away", timeline_y +1, timeline_y))
+    #join position abbreviations
+    mp <- mp %>% left_join(posAb %>% select(position_abbr, position.id), by = "position.id")
+    
+    #number of players on each team
+    nA <- dim(mp %>% filter(team.name == awayName))[1]
+    nH <- dim(mp %>% filter(team.name == homeName))[1]
+    
+    #match timeline_y values to events based on player id
+    this.ev <- this.ev %>% left_join(mp %>% select(player.id, timeline_y), by = "player.id")
+    #make NA values for duration into zeros
+    this.ev <- this.ev %>% mutate(duration = ifelse(is.na(duration), 0, duration))
+    
     
     #put in a list to call from rendering functions
-    list("mp" = mp, "pers" = pers, "cur_m" = cur_m, "cur_ev" = cur_ev)
+    list("mp" = mp, "pers" = pers, "cur_m" = this.m, "cur_ev" = this.ev)
     
   })
   

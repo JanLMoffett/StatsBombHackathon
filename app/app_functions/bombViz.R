@@ -17,23 +17,7 @@ transpa <- function(colorObject, alpha1to255){
   return(rgb(t(col2rgb(colorObject)), maxColorValue = 255, alpha = alpha1to255))
 }
 
-#blank soccer pitch!!! from statsbomb pdf on UEFA 2020 data
-blank_pitch <- function(){
-  ggplot() +
-    annotate("rect",xmin = 0, xmax = 120, ymin = 0, ymax = 80, fill = NA, colour = "black", size = 0.6) +
-    annotate("rect",xmin = 0, xmax = 60, ymin = 0, ymax = 80, fill = NA, colour = "black", size = 0.6) +
-    annotate("rect",xmin = 18, xmax = 0, ymin = 18, ymax = 62, fill = NA, colour = "black", size = 0.6) +
-    annotate("rect",xmin = 102, xmax = 120, ymin = 18, ymax = 62, fill = NA, colour = "black", size = 0.6) +
-    annotate("rect",xmin = 0, xmax = 6, ymin = 30, ymax = 50, fill = NA, colour = "black", size = 0.6) +
-    annotate("rect",xmin = 120, xmax = 114, ymin = 30, ymax = 50, fill = NA, colour = "black", size = 0.6) +
-    annotate("rect",xmin = 120, xmax = 120.5, ymin =36, ymax = 44, fill = NA, colour = "black", size = 0.6) +
-    annotate("rect",xmin = 0, xmax = -0.5, ymin =36, ymax = 44, fill = NA, colour = "black", size = 0.6) +
-    annotate("segment", x = 60, xend = 60, y = -0.5, yend = 80.5, colour = "black", size = 0.6)+
-    annotate("segment", x = 0, xend = 0, y = 0, yend = 80, colour = "black", size = 0.6)+
-    annotate("segment", x = 120, xend = 120, y = 0, yend = 80, colour = "black", size = 0.6)
-  
-}
-  
+
 #my function for plotting a blank pitch
 plot_pitch <- function(data = NULL, lineColor = "black"){
   
@@ -67,6 +51,15 @@ shUEFA <- c(
   "orange" = hex("ff9421"),
   "orangeDk" = hex("ff4d00"),
   "yellow" = hex("ffbf00")
+)
+
+
+icyUEFA <- c(
+  "ice1" = hex("e6f5ff"),
+  "ice2" = hex("ccebff"),
+  "ice3" = hex("A3DAFF"),
+  "ice4" = hex("81b1eb"),
+  "ice5" = hex("223fb3")
 )
 
 shUEFA_theme <- theme(
@@ -119,7 +112,55 @@ shUEFA_theme <- theme(
   validate = TRUE
 )
 
-
+shUEFA_theme_icy <- theme(
+  
+  line = element_line(color = icyUEFA["ice3"], linetype = "solid", lineend = "square", size = 0.5),
+  rect = element_rect(fill = icyUEFA["ice1"]),
+  
+  text = element_text(family = "sans", color = icyUEFA["ice5"]),
+  title = element_text(family = "sans", color = icyUEFA["ice5"]),
+  
+  axis.title = element_blank(), #element_text(face = "bold", color = shUEFA["blueDk"], size = 16, margin = margin(2,2,2,2,"pt")),
+  axis.text = element_blank(), #element_text(color = shUEFA["blueDk"], size = 11),
+  axis.ticks = element_blank(), #element_line(size = 0.5, lineend = "square", color = shUEFA["blueDk"]),
+  axis.ticks.length = unit(2, "mm"),
+  axis.line = element_blank(), #element_line(color = shUEFA["blueSky"], size = 0.5),
+  
+  legend.background = element_rect(fill = icyUEFA["ice2"], linetype = "blank"),
+  legend.margin = margin(10,10,10,10, unit = "pt"),
+  legend.key = element_rect(fill = icyUEFA["ice1"], linetype = "blank"),
+  legend.text = element_text(color = icyUEFA["ice5"], size = 11),
+  legend.text.align = 0.5,
+  legend.title = element_text(color = icyUEFA["ice5"], face = "bold", size = 16),
+  legend.title.align = 0.5,
+  legend.position = "none", #"right",
+  legend.direction = "vertical",
+  legend.justification = "top",
+  legend.box = "vertical",
+  legend.box.just = "center",
+  legend.box.margin = margin(6,6,6,6),
+  legend.box.background = element_rect(fill = icyUEFA["ice1"], color = icyUEFA["ice3"], size = 1),
+  
+  panel.background = element_rect(fill = icyUEFA["ice1"]),
+  panel.border = element_rect(fill = NA, color = icyUEFA["ice3"], size = 0.5),
+  panel.spacing = unit(10, "pt"),
+  panel.grid.major = element_blank(),#element_line(color = shUEFA["blueNavy"], size = 0.5),
+  panel.grid.minor = element_blank(),#element_line(color = shUEFA["blueNavy"], size = 0.5),
+  
+  plot.background = element_rect(fill = icyUEFA["ice1"]),
+  plot.title = element_text(face = "bold", size = 18, color = icyUEFA["ice5"], hjust = 0.5),
+  plot.subtitle = element_text(family = "sans", face = "italic", size = 12, color = icyUEFA["ice5"], hjust = 0.5),
+  plot.caption = element_text(family = "sans", color = icyUEFA["ice5"], size = 11),
+  plot.margin = margin(15,15,15,15),
+  plot.tag = element_text(family = "sans", color = icyUEFA["ice5"], size = 16),
+  plot.tag.position = c(0.95,1),
+  
+  strip.background = element_rect(fill = icyUEFA["ice2"], color = icyUEFA["ice3"], size = 0.5),
+  strip.text = element_text(family = "sans", face = "bold", size = 13, color = icyUEFA["ice5"]),
+  
+  complete = FALSE,
+  validate = TRUE
+)
 
 
 
