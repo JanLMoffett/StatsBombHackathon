@@ -1,0 +1,52 @@
+"","match_id","match_date","kick_off","home_score","away_score","match_week","home_team","away_team","competition_stage","stadium","stadium_country","referee","referee_country","match_result","final_score_differential","total_goals","total_goals_away","total_goals_home","total_own_goals","total_own_goals_home","total_own_goals_away"
+"1",3788753,"2021-06-16","15:00:00.000",0,1,2,"Finland","Russia","Group Stage","Saint-Petersburg Stadium","Russia","Danny Desmond Makkelie","Netherlands","away win",-1,1,1,0,0,0,0
+"2",3788765,"2021-06-20","18:00:00.000",3,1,3,"Switzerland","Turkey","Group Stage","Bakı Olimpiya Stadionu","Azerbaijan","Slavko Vinčić","Slovenia","home win",2,4,1,3,0,0,0
+"3",3795107,"2021-07-02","21:00:00.000",1,2,5,"Belgium","Italy","Quarter-finals","Allianz Arena","Germany","Slavko Vinčić","Slovenia","away win",-1,2,2,0,0,0,0
+"4",3795221,"2021-07-07","21:00:00.000",2,1,6,"England","Denmark","Semi-finals","Wembley Stadium","England","Danny Desmond Makkelie","Netherlands","home win",1,2,1,1,1,0,1
+"5",3795506,"2021-07-11","21:00:00.000",1,1,7,"Italy","England","Final","Wembley Stadium","England","Björn Kuipers","Netherlands","draw",0,2,1,1,0,0,0
+"6",3794688,"2021-06-29","18:00:00.000",2,0,4,"England","Germany","Round of 16","Wembley Stadium","England","Danny Desmond Makkelie","Netherlands","home win",2,2,0,2,0,0,0
+"7",3794692,"2021-06-29","21:00:00.000",1,2,4,"Sweden","Ukraine","Round of 16","Hampden Park","Scotland","Daniele Orsato","Italy","away win",-1,3,2,1,0,0,0
+"8",3794686,"2021-06-28","18:00:00.000",3,5,4,"Croatia","Spain","Round of 16","Parken","Denmark","Cüneyt Çakιr","Turkey","away win",-2,7,5,2,1,0,1
+"9",3794687,"2021-06-27","21:00:00.000",1,0,4,"Belgium","Portugal","Round of 16","Estadio de La Cartuja","Spain","Felix Brych","Germany","home win",1,1,0,1,0,0,0
+"10",3794685,"2021-06-26","21:00:00.000",2,1,4,"Italy","Austria","Round of 16","Wembley Stadium","England","Anthony Taylor","England","home win",1,3,1,2,0,0,0
+"11",3788774,"2021-06-23","21:00:00.000",2,2,3,"Germany","Hungary","Group Stage","Allianz Arena","Germany","Sergey Karasev","Russia","draw",0,4,2,2,0,0,0
+"12",3788771,"2021-06-22","21:00:00.000",3,1,3,"Croatia","Scotland","Group Stage","Hampden Park","Scotland","Fernando Andrés Rapallini","Argentina","home win",2,4,1,3,0,0,0
+"13",3788772,"2021-06-22","21:00:00.000",0,1,3,"Czech Republic","England","Group Stage","Wembley Stadium","England","Artur Manuel Ribeiro Soares Dias","Portugal","away win",-1,1,1,0,0,0,0
+"14",3788768,"2021-06-21","21:00:00.000",0,2,3,"Finland","Belgium","Group Stage","Saint-Petersburg Stadium","Russia","Felix Brych","Germany","away win",-2,1,1,0,1,1,0
+"15",3788767,"2021-06-21","18:00:00.000",0,1,3,"Ukraine","Austria","Group Stage","Arena Naţională","Romania","Cüneyt Çakιr","Turkey","away win",-1,1,1,0,0,0,0
+"16",3788763,"2021-06-19","15:00:00.000",1,1,2,"Hungary","France","Group Stage","Puskás Aréna","Hungary","Michael Oliver","England","draw",0,2,1,1,0,0,0
+"17",3788759,"2021-06-18","21:00:00.000",0,0,2,"England","Scotland","Group Stage","Wembley Stadium","England","Antonio Miguel Mateu Lahoz","Spain","draw",0,0,0,0,0,0,0
+"18",3788758,"2021-06-17","15:00:00.000",2,1,2,"Ukraine","North Macedonia","Group Stage","Arena Naţională","Romania","Fernando Andrés Rapallini","Argentina","home win",1,3,1,2,0,0,0
+"19",3788757,"2021-06-17","18:00:00.000",1,2,2,"Denmark","Belgium","Group Stage","Parken","Denmark","Björn Kuipers","Netherlands","away win",-1,3,2,1,0,0,0
+"20",3788745,"2021-06-13","15:00:00.000",1,0,1,"England","Croatia","Group Stage","Wembley Stadium","England","Daniele Orsato","Italy","home win",1,1,0,1,0,0,0
+"21",3788746,"2021-06-13","21:00:00.000",3,2,1,"Netherlands","Ukraine","Group Stage","Johan Cruijff Arena (Amsterdam)","Netherlands","Felix Brych","Germany","home win",1,5,2,3,0,0,0
+"22",3794691,"2021-06-28","21:00:00.000",3,3,4,"France","Switzerland","Round of 16","Arena Naţională","Romania","Fernando Andrés Rapallini","Argentina","draw",0,6,3,3,0,0,0
+"23",3794690,"2021-06-27","18:00:00.000",0,2,4,"Netherlands","Czech Republic","Round of 16","Puskás Aréna","Hungary","Sergey Karasev","Russia","away win",-2,2,2,0,0,0,0
+"24",3794689,"2021-06-26","18:00:00.000",0,4,4,"Wales","Denmark","Round of 16","Johan Cruijff Arena (Amsterdam)","Netherlands","Daniel Siebert","Germany","away win",-4,4,4,0,0,0,0
+"25",3788769,"2021-06-21","21:00:00.000",1,4,3,"Russia","Denmark","Group Stage","Parken","Denmark","Clément Turpin","France","away win",-3,4,4,0,0,0,0
+"26",3788761,"2021-06-18","15:00:00.000",1,0,2,"Sweden","Slovakia","Group Stage","Saint-Petersburg Stadium","Russia","Daniel Siebert","Germany","home win",1,0,0,0,0,0,0
+"27",3788764,"2021-06-19","18:00:00.000",2,4,2,"Portugal","Germany","Group Stage","Allianz Arena","Germany","Anthony Taylor","England","away win",-2,4,2,2,2,2,0
+"28",3788766,"2021-06-20","18:00:00.000",1,0,3,"Italy","Wales","Group Stage","Estadio Olímpico","Italy","Ovidiu Alin Hațegan","Romania","home win",1,1,0,1,0,0,0
+"29",3788754,"2021-06-16","21:00:00.000",3,0,2,"Italy","Switzerland","Group Stage","Estadio Olímpico","Italy","Sergey Karasev","Russia","home win",3,3,0,3,0,0,0
+"30",3788755,"2021-06-16","18:00:00.000",0,2,2,"Turkey","Wales","Group Stage","Bakı Olimpiya Stadionu","Azerbaijan","Artur Manuel Ribeiro Soares Dias","Portugal","away win",-2,2,2,0,0,0,0
+"31",3788773,"2021-06-23","21:00:00.000",2,2,3,"Portugal","France","Group Stage","Puskás Aréna","Hungary","Antonio Miguel Mateu Lahoz","Spain","draw",0,1,1,0,0,0,0
+"32",3788762,"2021-06-19","21:00:00.000",1,1,2,"Spain","Poland","Group Stage","Estadio de La Cartuja","Spain","Daniele Orsato","Italy","draw",0,2,1,1,0,0,0
+"33",3788760,"2021-06-18","18:00:00.000",1,1,2,"Croatia","Czech Republic","Group Stage","Hampden Park","Scotland","Carlos del Cerro Grande","Spain","draw",0,1,0,1,0,0,0
+"34",3788747,"2021-06-13","18:00:00.000",3,1,1,"Austria","North Macedonia","Group Stage","Arena Naţională","Romania","Lars Christian Andreas Ekberg","Sweden","home win",2,4,1,3,0,0,0
+"35",3788741,"2021-06-11","21:00:00.000",0,3,1,"Turkey","Italy","Group Stage","Estadio Olímpico","Italy","Danny Desmond Makkelie","Netherlands","away win",-3,2,2,0,1,1,0
+"36",3795220,"2021-07-06","21:00:00.000",1,1,6,"Italy","Spain","Semi-finals","Wembley Stadium","England","Felix Brych","Germany","draw",0,2,1,1,0,0,0
+"37",3788770,"2021-06-21","18:00:00.000",0,3,3,"North Macedonia","Netherlands","Group Stage","Johan Cruijff Arena (Amsterdam)","Netherlands","Istvan Kovacs","Romania","away win",-3,3,3,0,0,0,0
+"38",3795108,"2021-07-02","18:00:00.000",1,1,5,"Switzerland","Spain","Quarter-finals","Saint-Petersburg Stadium","Russia","Michael Oliver","England","draw",0,1,0,1,1,1,0
+"39",3795187,"2021-07-03","21:00:00.000",0,4,5,"Ukraine","England","Quarter-finals","Estadio Olímpico","Italy","Felix Brych","Germany","away win",-4,4,4,0,0,0,0
+"40",3795109,"2021-07-03","18:00:00.000",1,2,5,"Czech Republic","Denmark","Quarter-finals","Bakı Olimpiya Stadionu","Azerbaijan","Björn Kuipers","Netherlands","away win",-1,3,2,1,0,0,0
+"41",3788756,"2021-06-17","21:00:00.000",2,0,2,"Netherlands","Austria","Group Stage","Johan Cruijff Arena (Amsterdam)","Netherlands","Orel Grinfeeld","Israel","home win",2,1,0,1,0,0,0
+"42",3788749,"2021-06-14","18:00:00.000",1,2,1,"Poland","Slovakia","Group Stage","Saint-Petersburg Stadium","Russia","Ovidiu Alin Hațegan","Romania","away win",-1,2,1,1,1,1,0
+"43",3788750,"2021-06-14","21:00:00.000",0,0,1,"Spain","Sweden","Group Stage","Estadio de La Cartuja","Spain","Slavko Vinčić","Slovenia","draw",0,0,0,0,0,0,0
+"44",3788748,"2021-06-14","15:00:00.000",0,2,1,"Scotland","Czech Republic","Group Stage","Hampden Park","Scotland","Daniel Siebert","Germany","away win",-2,2,2,0,0,0,0
+"45",3788751,"2021-06-15","21:00:00.000",1,0,1,"France","Germany","Group Stage","Allianz Arena","Germany","Carlos del Cerro Grande","Spain","home win",1,0,0,0,1,0,1
+"46",3788752,"2021-06-15","18:00:00.000",0,3,1,"Hungary","Portugal","Group Stage","Puskás Aréna","Hungary","Cüneyt Çakιr","Turkey","away win",-3,2,2,0,0,0,0
+"47",3788742,"2021-06-12","18:00:00.000",0,1,1,"Denmark","Finland","Group Stage","Parken","Denmark","Anthony Taylor","England","away win",-1,1,1,0,0,0,0
+"48",3788775,"2021-06-23","18:00:00.000",0,5,3,"Slovakia","Spain","Group Stage","Estadio de La Cartuja","Spain","Björn Kuipers","Netherlands","away win",-5,3,3,0,2,2,0
+"49",3788776,"2021-06-23","18:00:00.000",3,2,3,"Sweden","Poland","Group Stage","Saint-Petersburg Stadium","Russia","Michael Oliver","England","home win",1,5,2,3,0,0,0
+"50",3788743,"2021-06-12","21:00:00.000",3,0,1,"Belgium","Russia","Group Stage","Saint-Petersburg Stadium","Russia","Antonio Miguel Mateu Lahoz","Spain","home win",3,3,0,3,0,0,0
+"51",3788744,"2021-06-12","15:00:00.000",1,1,1,"Wales","Switzerland","Group Stage","Bakı Olimpiya Stadionu","Azerbaijan","Clément Turpin","France","draw",0,2,1,1,0,0,0

@@ -6,6 +6,23 @@ timestamp_to_seconds <- function(timestampStr){
   
 }
 
+seconds_to_timestamp <- function(persum, num_seconds){
+  require(lubridate)
+  require(stringr)
+  
+  curper = ifelse(num_seconds < persum$cum_total_seconds[1], 1, 2)
+  num_sec = ifelse(curper > 1, num_seconds - persum$cum_total_seconds[1], num_seconds)
+  
+  num_min = floor(num_sec / 60)
+  
+  rem_seconds = round(num_sec - num_min*60, digits = 3)
+  
+  num_min = str_pad(as.character(num_min), width = 2, side = "left", pad = "0")
+  rem_seconds = as.character(rem_seconds)
+  
+  return(paste0("00:", num_min, ":", rem_seconds))
+}
+
 
 #takes match events df and returns list containing "period" and "timestamp" for end of match
 get_match_maxTime <- function(MatchEventsDF){
@@ -26,6 +43,20 @@ get_period_summary <- function(MatchEventsDF){
     mutate(cum_total_seconds = cumsum(total_seconds))
   
   return(per)
+  
+}
+
+get_possession_summary <- function(MatchEventsDF){
+  
+  max_sec <- max(MatchEventsDF$cum_match_seconds, na.rm = T)
+  
+  poss <- MatchEventsDF %>% arrange(index) %>% group_by(possession) %>%
+    summarize(
+      possession_team = first(possession_team.name),
+      start_of_poss = first(cum_match_seconds)) %>% 
+    mutate(end_of_poss = lead(start_of_poss, n = 1, default = max_sec))
+  
+  return(poss)
   
 }
 

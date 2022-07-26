@@ -2,6 +2,8 @@
 library(tidyverse)
 library(devtools)
 
+my_arrow <- arrow(angle = 35, length = unit(0.1, "inches"), ends = "last", type = "closed")
+
 hex <- function(hexCode){
   
   u <- as.character(hexCode)
@@ -45,12 +47,14 @@ shUEFA <- c(
   "blueLt" = hex("0077ff"),
   "blueSky" = hex("00ccff"),
   "bluePale" = hex("ccebff"),
-  "purple" = hex("473c85"),
-  "purpleLt" = hex("a08fff"),
+  "purple" = hex("760ee6"),
+  "purpleLt" = hex("9e53ed"),
   "orangeLt" = hex("ffce99"),
   "orange" = hex("ff9421"),
   "orangeDk" = hex("ff4d00"),
-  "yellow" = hex("ffbf00")
+  "yellow" = hex("ffbf00"),
+  "red" = hex("f50505"),
+  "salmon" = hex("f25252")
 )
 
 
@@ -162,6 +166,70 @@ shUEFA_theme_icy <- theme(
   validate = TRUE
 )
 
+# ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ 
+#scales for visualizing event types:
+eventTypes <- c("Starting XI", "Half Start", "Pass", 
+                "Ball Receipt*", "Carry", "Pressure", 
+                "Miscontrol", "Interception", "Dribble", 
+                "Duel", "Ball Recovery", "Block", 
+                "Shot", "Goal Keeper", "Clearance", 
+                "Dribbled Past", "Foul Committed", "Foul Won", 
+                "Dispossessed", "Offside", "Shield", 
+                "Half End", "Substitution", "Tactical Shift",
+                "Injury Stoppage", "Own Goal Against", "Own Goal For", 
+                "Referee Ball-Drop", "Error", "Player Off", 
+                "Player On", "50/50", "Bad Behaviour")
+
+eventColorGroups <- c("Roster", "Time", "Offense",
+                      "Offense", "Offense", "Defense",
+                      "Offense", "Defense", "Offense",
+                      "Defense", "Offense", "Defense",
+                      "Offense", "Defense", "Defense",
+                      "Defense", "Foul", "Foul", 
+                      "Offense", "Foul", "Offense", 
+                      "Time", "Roster", "Roster", 
+                      "Time", "Offense", "Defense",
+                      "Time", "Defense", "Roster", 
+                      "Roster", "Offense", "Foul")
+
+eventShapeGroups <- c("Marker", "Marker", "Ball Plus", 
+                "Ball Neutral", "Ball Plus", "No Ball", 
+                "Ball Negative", "Ball Plus", "Ball Plus", 
+                "No Ball", "Ball Plus", "No Ball", 
+                "Ball Plus", "No Ball", "Ball Plus", 
+                "No Ball", "Foul", "Freebie", 
+                "Ball Negative", "No Ball", "No Ball", 
+                "Marker", "Marker", "Marker",
+                "Marker", "Ball Negative", "Ball Plus", 
+                "Marker", "Ball Negative", "Marker", 
+                "Marker", "Ball Neutral", "Foul")
+
+eventTypes <- data.frame(event_type = eventTypes, 
+                         color_group = eventColorGroups,
+                         shape_group = eventShapeGroups)
 
 
+ecg <- data.frame(
+  group = unique(eventColorGroups),
+  color = c(shUEFA["blueDk"], shUEFA["blueNavy"], shUEFA["orange"], shUEFA["purple"], shUEFA["red"])
+  
+)
 
+esg <- data.frame(
+  group = unique(eventShapeGroups),
+  shape = c(3, 19, 1, 15, 13, 4, 18)
+)
+
+eventTypes <- left_join(eventTypes, ecg, by = c("color_group" = "group")) %>%
+  left_join(esg, by = c("shape_group" = "group"))
+
+
+events_scale_shapes <- eventTypes$shape
+names(events_scale_shapes) <- eventTypes$event_type
+
+events_scale_colors <- eventTypes$color
+names(events_scale_colors) <- eventTypes$event_type
+
+#event types included in checkbox input
+
+eventTypes2 <- unique(eventTypes$event_type)[c(3:21,26:29,32:33)]
