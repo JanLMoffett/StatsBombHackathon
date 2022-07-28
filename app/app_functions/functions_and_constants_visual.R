@@ -3,7 +3,11 @@ library(tidyverse)
 library(devtools)
 
 my_arrow <- arrow(angle = 35, length = unit(0.1, "inches"), ends = "last", type = "closed")
+#}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}
+#                                 Color Functions
+#}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}
 
+#turn hex codes into colors
 hex <- function(hexCode){
   
   u <- as.character(hexCode)
@@ -15,29 +19,15 @@ hex <- function(hexCode){
   return(rgb(t(col2rgb(u)), maxColorValue = 255))
 }
 
+#make an opaque color transparent
 transpa <- function(colorObject, alpha1to255){
   return(rgb(t(col2rgb(colorObject)), maxColorValue = 255, alpha = alpha1to255))
 }
 
 
-#my function for plotting a blank pitch
-plot_pitch <- function(data = NULL, lineColor = "black"){
-  
-  ggp <- ggplot(data = data) +
-    annotate("rect",xmin = 0, xmax = 120, ymin = 0, ymax = 80, fill = NA, colour = lineColor, size = 0.6) +
-    annotate("rect",xmin = 0, xmax = 60, ymin = 0, ymax = 80, fill = NA, colour = lineColor, size = 0.6) +
-    annotate("rect",xmin = 18, xmax = 0, ymin = 18, ymax = 62, fill = NA, colour = lineColor, size = 0.6) +
-    annotate("rect",xmin = 102, xmax = 120, ymin = 18, ymax = 62, fill = NA, colour = lineColor, size = 0.6) +
-    annotate("rect",xmin = 0, xmax = 6, ymin = 30, ymax = 50, fill = NA, colour = lineColor, size = 0.6) +
-    annotate("rect",xmin = 120, xmax = 114, ymin = 30, ymax = 50, fill = NA, colour = lineColor, size = 0.6) +
-    annotate("rect",xmin = 120, xmax = 120.5, ymin =36, ymax = 44, fill = NA, colour = lineColor, size = 0.6) +
-    annotate("rect",xmin = 0, xmax = -0.5, ymin =36, ymax = 44, fill = NA, colour = lineColor, size = 0.6) +
-    annotate("segment", x = 60, xend = 60, y = -0.5, yend = 80.5, colour = lineColor, size = 0.6)+
-    annotate("segment", x = 0, xend = 0, y = 0, yend = 80, colour = lineColor, size = 0.6)+
-    annotate("segment", x = 120, xend = 120, y = 0, yend = 80, colour = lineColor, size = 0.6)
-  
-  return(ggp)
-}
+#}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}
+#                             Color Constants & Themes
+#}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}
 
 # colors from my ShinyUEFA color scheme
 shUEFA <- c(
@@ -52,10 +42,17 @@ shUEFA <- c(
   "orangeLt" = hex("ffce99"),
   "orange" = hex("ff9421"),
   "orangeDk" = hex("ff4d00"),
+  "orangeDkr" = hex("d64202"),
   "yellow" = hex("ffbf00"),
   "red" = hex("f50505"),
-  "salmon" = hex("f25252")
+  "salmon" = hex("f25252"),
+  "ibm_blue" = hex("648fff"),
+  "ibm_purple" = hex("785ef0"),
+  "ibm_pink" = hex("dc267f"),
+  "ibm_orange" = hex("fe6100"),
+  "ibm_yellow" = hex("ffb000")
 )
+
 
 
 icyUEFA <- c(
@@ -66,56 +63,10 @@ icyUEFA <- c(
   "ice5" = hex("223fb3")
 )
 
-shUEFA_theme <- theme(
-  
-  line = element_line(color = shUEFA["blueSky"], linetype = "solid", lineend = "square", size = 0.5),
-  rect = element_rect(fill = shUEFA["blueDk"]),
-  
-  text = element_text(family = "sans", color = shUEFA["purpleLt"]),
-  title = element_text(family = "sans", color = shUEFA["purpleLt"]),
-  
-  axis.title = element_text(face = "bold", color = shUEFA["purpleLt"], size = 16, margin = margin(2,2,2,2,"pt")),
-  axis.text = element_text(color = shUEFA["blueSky"], size = 11),
-  axis.ticks = element_line(size = 0.5, lineend = "square", color = shUEFA["blueSky"]),
-  axis.ticks.length = unit(2, "mm"),
-  axis.line = element_line(color = shUEFA["blueSky"], size = 0.5),
-  
-  legend.background = element_rect(fill = shUEFA["blueNavy"], linetype = "blank"),
-  legend.margin = margin(10,10,10,10, unit = "pt"),
-  legend.key = element_rect(fill = shUEFA["blueNavy"], linetype = "blank"),
-  legend.text = element_text(color = shUEFA["blueSky"], size = 11),
-  legend.text.align = 0.5,
-  legend.title = element_text(color = shUEFA["purpleLt"], face = "bold", size = 16),
-  legend.title.align = 0.5,
-  legend.position = "right",
-  legend.direction = "vertical",
-  legend.justification = "top",
-  legend.box = "vertical",
-  legend.box.just = "center",
-  legend.box.margin = margin(6,6,6,6),
-  legend.box.background = element_rect(fill = shUEFA["blueDk"], color = shUEFA["blueNavy"], size = 1),
-  
-  panel.background = element_rect(fill = shUEFA["blueNavy"]),
-  panel.border = element_rect(fill = NA, color = shUEFA["blueDk"], size = 0.5),
-  panel.spacing = unit(10, "pt"),
-  panel.grid.major = element_line(color = shUEFA["blueNavy"], size = 0.5),
-  panel.grid.minor = element_line(color = shUEFA["blueNavy"], size = 0.5),
-  
-  plot.background = element_rect(fill = shUEFA["blueDk"]),
-  plot.title = element_text(face = "bold", size = 24, color = shUEFA["purpleLt"], hjust = 0.5),
-  plot.subtitle = element_text(family = "sans", face = "italic", size = 12, color = shUEFA["purpleLt"], hjust = 0.5),
-  plot.caption = element_text(family = "sans", color = shUEFA["blueSky"], size = 11),
-  plot.margin = margin(15,15,15,15),
-  plot.tag = element_text(family = "sans", color = shUEFA["blueSky"], size = 16),
-  plot.tag.position = c(0.95,1),
-  
-  strip.background = element_rect(fill = shUEFA["blueDk"], shUEFA["blueSky"], size = 0.5),
-  strip.text = element_text(family = "sans", face = "bold", size = 13, color = shUEFA["blueSky"]),
-  
-  complete = FALSE,
-  validate = TRUE
-)
+#an arrow to add to line segments, when needed
+my_arrow <- arrow(angle = 35, length = unit(0.1, "inches"), ends = "last", type = "closed")
 
+#pale blue theme used for plots in app
 shUEFA_theme_icy <- theme(
   
   line = element_line(color = icyUEFA["ice3"], linetype = "solid", lineend = "square", size = 0.5),
@@ -165,6 +116,33 @@ shUEFA_theme_icy <- theme(
   complete = FALSE,
   validate = TRUE
 )
+
+
+#}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}
+#                                 Plotting Functions
+#}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}|{=@=}
+
+#my function for plotting a blank pitch
+plot_pitch <- function(data = NULL, lineColor = "black"){
+  
+  ggp <- ggplot(data = data) +
+    annotate("rect",xmin = 0, xmax = 120, ymin = 0, ymax = 80, fill = NA, colour = lineColor, size = 0.6) +
+    annotate("rect",xmin = 0, xmax = 60, ymin = 0, ymax = 80, fill = NA, colour = lineColor, size = 0.6) +
+    annotate("rect",xmin = 18, xmax = 0, ymin = 18, ymax = 62, fill = NA, colour = lineColor, size = 0.6) +
+    annotate("rect",xmin = 102, xmax = 120, ymin = 18, ymax = 62, fill = NA, colour = lineColor, size = 0.6) +
+    annotate("rect",xmin = 0, xmax = 6, ymin = 30, ymax = 50, fill = NA, colour = lineColor, size = 0.6) +
+    annotate("rect",xmin = 120, xmax = 114, ymin = 30, ymax = 50, fill = NA, colour = lineColor, size = 0.6) +
+    annotate("rect",xmin = 120, xmax = 120.5, ymin =36, ymax = 44, fill = NA, colour = lineColor, size = 0.6) +
+    annotate("rect",xmin = 0, xmax = -0.5, ymin =36, ymax = 44, fill = NA, colour = lineColor, size = 0.6) +
+    annotate("segment", x = 60, xend = 60, y = -0.5, yend = 80.5, colour = lineColor, size = 0.6)+
+    annotate("segment", x = 0, xend = 0, y = 0, yend = 80, colour = lineColor, size = 0.6)+
+    annotate("segment", x = 120, xend = 120, y = 0, yend = 80, colour = lineColor, size = 0.6)
+  
+  return(ggp)
+}
+
+
+
 
 # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ 
 #scales for visualizing event types:
