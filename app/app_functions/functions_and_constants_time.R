@@ -1,6 +1,7 @@
 
 #takes a timestamp string in "00:00:00.000" format and returns numeric seconds
 timestamp_to_seconds <- function(timestampStr){
+  
   require(lubridate)
   return(as.numeric(seconds(hms(timestampStr))))
   
@@ -37,6 +38,7 @@ get_match_maxTime <- function(MatchEventsDF){
 
 #takes match events df and returns a table of periods with end timestamps and total seconds
 get_period_summary <- function(MatchEventsDF){
+  require(dplyr)
   
   per <- MatchEventsDF %>% group_by(period) %>%
     summarize(max_ts = max(timestamp, na.rm = T)) %>% 
@@ -48,6 +50,7 @@ get_period_summary <- function(MatchEventsDF){
 }
 
 get_possession_summary <- function(MatchEventsDF){
+  require(dplyr)
   
   max_sec <- max(MatchEventsDF$cum_match_seconds, na.rm = T)
   
@@ -63,7 +66,7 @@ get_possession_summary <- function(MatchEventsDF){
 
 #takes events df and returns same df with cum_match_seconds variable added
 get_cumulative_match_seconds <- function(MatchEventsDF){
-  
+  require(dplyr)
   this.per <- get_period_summary(MatchEventsDF)
   
   mdf <- MatchEventsDF %>% mutate(ts_seconds = timestamp_to_seconds(timestamp)) %>%
@@ -77,6 +80,28 @@ get_cumulative_match_seconds <- function(MatchEventsDF){
       ))
   
   return(mdf)
+}
+
+get_time_bins_match_events <- function(MatchEventsDF){
+  require(dplyr)
+  
+  if(is.null(MatchEventsDF$cum_match_seconds)){
+    print("Run get_cumulative_match_seconds() first!")
+  }else{
+    max_sec <- max(MatchEventsDF$cum_match_seconds, na.rm = T)
+    #divide it by 90 bins
+    bin_width <- max_sec/90
+    
+    #assign bins to events
+    MatchEventsDF <- MatchEventsDF %>% mutate(time_bin = floor(cum_match_seconds/bin_width))
+  }
+  
+  return(MatchEventsDF)
+}
+
+get_time_bin <- function(cumMatchSeconds, maxMatchSeconds){
+  bin_width <- maxMatchSeconds/90
+  return(floor(cumMatchSeconds/bin_width))
 }
 
 #takes match players and match events df and returns match players df with 

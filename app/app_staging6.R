@@ -251,7 +251,7 @@ server <- function(input, output){
     tmd <- this_match_data()
     
     req(input$slider_time)
-    selected_tb <- floor(input$slider_time/tmd[["bin_width"]])
+    selected_tb <- get_time_bin(input$slider_time, tmd[["max_sec"]])
     
     #time-bin-reactive data
     tb_wdl <- tmd[["this_wdl"]] %>% filter(time_bin == selected_tb)
@@ -280,11 +280,7 @@ server <- function(input, output){
                      tags$td(paste0(this.m$away_score, " - ", this.m$home_score)),
                      tags$td(paste0(this.m$competition.competition_name, " ", this.m$season.season_name)), 
                      tags$td(paste0("Week ", this.m$match_week)),
-                     tags$td(paste0(this.m$stadium.name, " ", this.m$stadium.country.name)))
-        
-        
-      
-    )
+                     tags$td(paste0(this.m$stadium.name, " ", this.m$stadium.country.name))))
     
     
     
@@ -304,13 +300,16 @@ server <- function(input, output){
     
     req(input$slider_time)
     selected_time <- input$slider_time
-    selected_tb <- floor(selected_time/tmd[["bin_width"]])
+    selected_tb <- get_time_bin(selected_time, tmd[["max_sec"]])
     
     this.hjust <- ifelse(selected_time/tmd[["bin_width"]] > 45, 1, 0)
     this.posAdj <- ifelse(selected_time/tmd[["bin_width"]] > 45, -1, 1)
     
     tb_as <- this.fg %>% filter(time_bin == selected_tb) %>% pull(cur_away_score)
     tb_hs <- this.fg %>% filter(time_bin == selected_tb) %>% pull(cur_home_score)
+    
+    lossColor <- shUEFA["ibm_blue"]
+    winColor <- shUEFA["ibm_pink"]
     
     ggplot(this.fg) + 
       shUEFA_theme_icy + 
