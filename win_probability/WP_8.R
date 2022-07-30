@@ -116,15 +116,15 @@ saveRDS(mod2.a, "app/app_functions/goals_model_w_scaling_away.rds")
 #                       predicting UEFA 2020 matches
 #~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))~))
 
-mod2.a <- readRDS("app/app_functions/goals_model_w_scaling_away.rds")
-mod2.h <- readRDS("app/app_functions/goals_model_w_scaling_home.rds")
+mod1.a <- readRDS("app/app_functions/goals_model_away.rds")
+mod1.h <- readRDS("app/app_functions/goals_model_home.rds")
 
 #all the UEFA 2020 events
 evc <- read.csv("app/app_data/events_corr_3.csv")
 evp <- read.csv("win_probability/wp_data/events_pred_set.csv")
 
-evp_scaled <- rescale(as.matrix(evp %>% select(time_bin:end_loc_y)))
-evp_scaled <- as_tibble(evp_scaled) %>%
+#evp_scaled <- rescale(as.matrix(evp %>% select(time_bin:end_loc_y)))
+evp_scaled <- as_tibble(evp) %>%
   mutate(match_id = evp$match_id, id = evp$id) %>%
   relocate(match_id, id)
 
@@ -171,8 +171,8 @@ for(matchID in match_ids){
   #i won't need to as long as i keep the time bin variable intact
   
   #get goal prediction matrices for match
-  this.gpm.h <- predict(mod2.h, this.nd[,-1:-2], type = "probs")
-  this.gpm.a <- predict(mod2.a, this.nd[,-1:-2], type = "probs")
+  this.gpm.h <- predict(mod1.h, this.nd[,-1:-2], type = "probs")
+  this.gpm.a <- predict(mod1.a, this.nd[,-1:-2], type = "probs")
   
   #renaming columns back to number of goals
   colnames(this.gpm.h) <- paste0("P_", as.character(0:13), "_Goals")
@@ -256,15 +256,24 @@ outer_wp_df <- outer_wp_df %>% mutate(
 #remove dummy row
 outer_wp_df <- outer_wp_df[-1,]
 #save all event-by-event win/draw/lose probabilities for uefa 2020
-#write.csv(outer_wp_df, "app/app_data/win_probabilities_scaled.csv")
+write.csv(outer_wp_df, "app/app_data/win_probabilities_events_redo.csv")
 #outer_wp_df <- read.csv("app/app_data/win_probabilities_scaled.csv")
 
 evc_w_pred <- left_join(evc, outer_wp_df %>% select(id, p_win, p_draw, p_loss), by = "id")
 evc_w_pred <- evc_w_pred %>% arrange(match_id, index)
 
 #joined predicted outcome probabilities with events
-write.csv(evc_w_pred, "app/app_data/events_with_wdl.csv")
+write.csv(evc_w_pred, "app/app_data/events_with_wdl2.csv")
 
-ggplot(evc_w_pred %>% filter(match_id == 3795187)) + 
-  geom_line(aes(x = cum_match_seconds, y = p_win)) + 
-  geom_smooth(aes(x = cum_match_seconds, y = p_win), method = "gam")
+
+ggplot(evc_w_pred %>% filter(match_id == match_ids[4])) + 
+  geom_line(aes(x = cum_match_seconds, y = p_win), color = "orange") + 
+  geom_line(aes(x = cum_match_seconds, y = p_draw), color = "green") + 
+  geom_line(aes(x = cum_match_seconds, y = p_loss), color = "blue")
+  
+  
+matchIDs[4]
+  
+  
+  
+  

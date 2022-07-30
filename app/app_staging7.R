@@ -4,28 +4,20 @@ library(shiny)
 library(tidyverse)
 library(lubridate)
 
-source("app_functions/functions_and_constants_visual.R")
-source("app_functions/functions_and_constants_time.R")
+source("app_functions/functions_and_constants_visual2.R")
+source("app_functions/functions_and_constants_time2.R")
 
 # ||=||=||@||=||=||=||=||=||@||=||=||=||=||=||@||=||=||=||=||=||@||=||=||=
 #                               Get Data
 # ||=||=||@||=||=||=||=||=||@||=||=||=||=||=||@||=||=||=||=||=||@||=||=||=
 
 m <- read.csv("app_data/matches_corr.csv")
-ev <- read.csv("app_data/events_corr_2.csv")
+ev <- read.csv("app_data/events_with_wdl2.csv")
 all_mp <- read.csv("app_data/all_match_players_corr.csv")
-#future goals and other model input data, min-by-min
-fg <- read.csv("app_data/futureGoals_55_7.csv")
-#all min-by-min goal probabilities for uefa 2020
-gp <- read.csv("app_data/goal_probabilities_UEFA2020_dbg.csv")
-#all min-by-min win/draw/lose probabilities for uefa 2020
-wdl <- read.csv("app_data/win_probabilities_UEFA2020_dbg.csv")
-
 
 #list of unique match_id values for selectInput
 matchIDs <- unique(m$match_id)
 names(matchIDs) <- m$menu_text
-
 
 #UI-----
 
@@ -33,7 +25,7 @@ ui <- fluidPage(
   
   tags$head(
     
-    tags$title("StatsBomb360 Win Probability Dashboard"),
+    tags$title("StatsBomb360 Win Probability Match Evaluator"),
     
     #app styling
     #----
@@ -103,6 +95,7 @@ ui <- fluidPage(
         
       }"))
     #----
+    #----
   ),
   
   #header
@@ -112,7 +105,7 @@ ui <- fluidPage(
            tags$img(src = "SB_BrandIcon_ColourPositive.png", width = "15%")
            ),
     column(8,
-           tags$h1("Win Probability Evaluator")
+           tags$h1("Win Probability Match Evaluator")
            )
     
   ),
@@ -123,7 +116,7 @@ ui <- fluidPage(
     
     tags$div(id = "match_select_wrapper",
      
-        tags$p("Welcome to the StatsBomb Match Evaluator! This app uses StatsBomb soccer events data and Win Probability to provide and evidence-based approach to reviewing the events of a match and accurately evaluating player contributions to the outcome."),
+        tags$p("Welcome to the StatsBomb Win Probability Match Evaluator! This app uses StatsBomb soccer events data and Win Probability to provide and evidence-based approach to reviewing the events of a match and accurately evaluating player contributions to the outcome."),
         #match selection input
         selectInput("match_select", "Select a match from the UEFA Euro 2020 Competition:", matchIDs, selectize = F, width = "500px")
         
@@ -190,22 +183,35 @@ ui <- fluidPage(
 
 server <- function(input, output){
   
-  #update data according to match id input
+  # Match ID Reactive Data
   this_match_data <- reactive({
     
     req(input$match_select)
     selected_match <- input$match_select
-    #row of general info for match
-    # Match ID Reactive Data
+    
     this.m <- m %>% filter(match_id == selected_match)
-    this.ev <- ev %>% filter(match_id == selected_match, period < 3)
-    this.ev <- get_cumulative_match_seconds(this.ev)
+    this.ev <- ev %>% filter(match_id == selected_match)
+    
     mp <- all_mp %>% filter(match_id == selected_match)
     pers <- get_period_summary(this.ev)
     poss <- get_possession_summary(this.ev)
-    this.fg <- fg %>% filter(match_id == selected_match)
-    this.gp <- gp %>% filter(match_id == selected_match)
-    this.wdl <- wdl %>% filter(match_id == selected_match)
+    
+    this.tb <- this.ev %>% arrange(index) %>% group_by(time_bin) %>%
+      summarize(start_cur_away_score = first(cur_away_score),
+                end_cur_away_score = last(cur_away_score),
+                start_cur_home_score = first(cur_home_score),
+                end_cur_home_score = last(cur_home_score),
+                start_p_win = first(p_win),
+                start_p_draw = first(p_draw),
+                start_p_loss = first(p_loss),
+                end_p_win = last(p_win),
+                end_p_draw = last(p_draw),
+                end_p_loss = last(p_loss)) %>%
+      mutate(away_goal = end_cur_away_score - start_cur_away_score,
+             home_goal = end_cur_home_score - start_cur_home_score,
+             delta_p_win = end_p_win - start_p_win,
+             delta_p_draw = end_p_draw - start_p_draw,
+             delta_p_loss = end_p_loss - start_p_loss)
     
     #get names of teams
     awayName <- this.m %>% pull(away_team.away_team_name)
@@ -217,48 +223,18 @@ server <- function(input, output){
     #divide it by 90 bins
     bin_width <- max_sec/90
     
-    
-    
-    
-    return(#this match data
-      tmd <- list(this_m = this.m,
-                  this_ev = this.ev,
-                  mp = mp,
-                  pers = pers,
-                  poss = poss,
-                  this_fg = this.fg,
-                  this_gp = this.gp,
-                  this_wdl = this.wdl,
-                  awayName = awayName,
-                  homeName = homeName,
-                  max_sec = max_sec,
-                  bin_width = bin_width))
+    tmd <- list(this_m = this.m,
+                this_ev = this.ev,
+                this_tb = this.tb,
+                mp = mp,
+                pers = pers,
+                poss = poss,
+                awayName = awayName,
+                homeName = homeName,
+                max_sec = max_sec,
+                bin_width = bin_width)
   })
   
-  
-  this_time_bin_data <- reactive({
-    
-    tmd <- this_match_data()
-    
-    req(input$slider_time)
-    selected_tb <- get_time_bin(input$slider_time, tmd[["max_sec"]])
-    
-    #time-bin-reactive data
-    tb_wdl <- tmd[["this_wdl"]] %>% filter(time_bin == selected_tb)
-    tb_fg <- tmd[["this_fg"]] %>% filter(time_bin == selected_tb)
-    tb_ev <- tmd[["this_ev"]] %>% filter(time_bin == selected_tb)
-    #when a time bin is selected, i want to highlight the players that are involved
-    tb_players <- unique(tb_ev$player.id)
-    tb_mp <- tmd[["mp"]] %>% filter(player.id %in% tb_players)
-    
-    return(list(
-      tb_wdl = tb_wdl,
-      tb_fg = tb_fg,
-      tb_ev = tb_ev,
-      tb_mp = tb_mp
-    ))
-    
-  })
   
   output$match_info <- renderUI({
     
@@ -278,13 +254,13 @@ server <- function(input, output){
   
   output$score_plot <- renderPlot({
     tmd <- this_match_data()
-    this.fg <- tmd[["this_fg"]]
+    this.tb <- tmd[["this_tb"]]
     
-    cas <- this.fg$cur_away_score
-    chs <- this.fg$cur_home_score
+    cas <- this.tb$end_cur_away_score
+    chs <- this.tb$end_cur_home_score
     
-    cas2 <- c(cas, rep.int(max(cas, na.rm = T), (90 - length(cas))))
-    chs2 <- c(chs, rep.int(max(chs, na.rm = T), (90 - length(chs))))
+    cas2 <- c(cas, rep.int(max(cas, na.rm = T), ifelse(length(cas) < 90, (90 - length(cas)), 0)))[1:90]
+    chs2 <- c(chs, rep.int(max(chs, na.rm = T), ifelse(length(chs) < 90, (90 - length(chs)), 0)))[1:90]
     
     max_score = max(max(cas, na.rm = T), max(chs, na.rm = T))
     
@@ -292,16 +268,16 @@ server <- function(input, output){
     selected_time <- input$slider_time
     selected_tb <- get_time_bin(selected_time, tmd[["max_sec"]])
     
-    this.hjust <- ifelse(selected_time/tmd[["bin_width"]] > 45, 1, 0)
-    this.posAdj <- ifelse(selected_time/tmd[["bin_width"]] > 45, -1, 1)
+    this.hjust <- ifelse(selected_tb > 45, 1, 0)
+    this.posAdj <- ifelse(selected_tb > 45, -1, 1)
     
-    tb_as <- this.fg %>% filter(time_bin == selected_tb) %>% pull(cur_away_score)
-    tb_hs <- this.fg %>% filter(time_bin == selected_tb) %>% pull(cur_home_score)
+    tb_as <- this.tb %>% filter(time_bin == selected_tb) %>% pull(end_cur_away_score)
+    tb_hs <- this.tb %>% filter(time_bin == selected_tb) %>% pull(end_cur_home_score)
     
     lossColor <- shUEFA["ibm_blue"]
     winColor <- shUEFA["ibm_pink"]
     
-    ggplot(this.fg) + 
+    ggplot(this.tb) + 
       shUEFA_theme_icy + 
       theme(plot.margin = unit(c(2,2,0,0), unit="pt"), 
             plot.title = element_text(size = 12, hjust = 0, color = shUEFA["blueLt"])) +
@@ -319,7 +295,7 @@ server <- function(input, output){
       #away team score
       annotate("segment", x = seq(0, 89, 1), xend = seq(1, 90, 1), y = cas2, yend = cas2, color = lossColor, size = 1.1, linetype = 1) +
       #home team score
-      annotate("segment", x = seq(0, 89, 1), xend = seq(1, 90, 1), y = chs2, yend = chs2, color = winColor, size = 1, linetype = 2) + 
+      annotate("segment", x = seq(0, 89, 1), xend = seq(1, 90, 1), y = chs2, yend = chs2, color = winColor, size = 1, linetype = 3) + 
       
       #selected time marker
       annotate("segment", x = selected_time/tmd[["bin_width"]], xend = selected_time/tmd[["bin_width"]], 
@@ -336,37 +312,38 @@ server <- function(input, output){
   output$wp_plot <- renderPlot({
     
     tmd <- this_match_data()
-    this.wdl <- tmd[["this_wdl"]]
-    this.fg <- tmd[["this_fg"]]
+    this.ev <- tmd[["this_ev"]]
+    this.tb <- tmd[["this_tb"]]
     awayName <- tmd[["awayName"]]
     homeName <- tmd[["homeName"]]
     
     req(input$slider_time)
     selected_time <- input$slider_time
-    selected_tb <- floor(selected_time/tmd[["bin_width"]])
+    selected_tb <- get_time_bin(selected_time, tmd[["max_sec"]])
     
     winColor = shUEFA["ibm_pink"]
     drawColor = shUEFA["ibm_yellow"]
     lossColor = shUEFA["ibm_blue"]
     
-    pWin <- this.wdl %>% filter(time_bin == selected_tb) %>% pull(p_win)
-    pDraw <- this.wdl %>% filter(time_bin == selected_tb) %>% pull(p_draw)
-    pLoss <- this.wdl %>% filter(time_bin == selected_tb) %>% pull(p_loss)
+    pWin <- this.tb %>% filter(time_bin == selected_tb) %>% pull(start_p_win)
+    pDraw <- this.tb %>% filter(time_bin == selected_tb) %>% pull(start_p_draw)
+    pLoss <- this.tb %>% filter(time_bin == selected_tb) %>% pull(start_p_loss)
     
-    ggplot(this.wdl) + shUEFA_theme_icy +
+    ggplot(this.ev) + shUEFA_theme_icy +
       theme(plot.margin = unit(c(2,2,0,0), unit="pt"), 
             plot.title = element_text(size = 12, hjust = 0, color = shUEFA["blueLt"])) +
+      coord_cartesian(xlim = c(0, max_sec), ylim = c(0,1), expand = 0) + 
       
       labs(title = "Match Outcome Probability") + 
       
-      coord_cartesian(xlim = c(0, 90), ylim = c(0,1), expand = 0) + 
-      
-      annotate("rect", xmin = seq(0, 88, 2), xmax = seq(1, 89, 2), ymin = 0, ymax = 1, fill = "white", alpha = 0.5) + 
-      
       #probability lines
-      geom_line(aes(x = time_bin, y = p_win), color = winColor, size = 1) + 
-      geom_line(aes(x = time_bin, y = p_draw), color = drawColor, size = 1) + 
-      geom_line(aes(x = time_bin, y = p_loss), color = lossColor, size = 1) +
+      geom_line(aes(x = cum_match_seconds, y = p_win), color = winColor) + 
+      geom_line(aes(x = cum_match_seconds, y = p_draw), color = drawColor) + 
+      geom_line(aes(x = cum_match_seconds, y = p_loss), color = lossColor) +
+      
+      geom_smooth(aes(x = cum_match_seconds, y = p_win), color = winColor) + 
+      geom_smooth(aes(x = cum_match_seconds, y = p_draw), color = drawColor) + 
+      geom_smooth(aes(x = cum_match_seconds, y = p_loss), color = lossColor) +
       
       #legend
       annotate("rect", xmin = 0, xmax = 34, ymin = 0.68, ymax = 1, fill = "white", alpha = 0.5) + 
@@ -375,7 +352,7 @@ server <- function(input, output){
       annotate("text", x = 1, y = 0.75, label = paste0("P(", awayName, " Win) = ", pLoss), color = lossColor, hjust = 0, size = 6) +
       
       #selected time marker
-      annotate("segment", x = selected_time/tmd[["bin_width"]], xend = selected_time/tmd[["bin_width"]], 
+      annotate("segment", x = selected_time, xend = selected_time, 
                y = 0, yend = 1, color = shUEFA["orangeDk"], size = 1)
     
     
@@ -399,29 +376,45 @@ server <- function(input, output){
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   output$pitch_plot <- renderPlot({
     
-    ttbd <- this_time_bin_data()
-    tb_ev <- ttbd[["tb_ev"]]
-    tb_fg <- ttbd[["tb_fg"]]
+    tmd <- this_match_data()
+    this.ev <- tmd[["this_ev"]]
+    
+    req(input$slider_time)
+    selected_time <- input$slider_time
+    
+    #how many seconds in the past to include events from
+    buffer <- 5
     
     req(input$event_select)
     selected_events <- input$event_select
+    
+    tb_ev <- this.ev %>% filter(between(cum_match_seconds, selected_time - buffer, selected_time))
     
     #add on locations of events that happened in the time bin
     plot_pitch(tb_ev %>% filter(type.name %in% selected_events), icyUEFA["ice5"]) + shUEFA_theme_icy +
       geom_point(aes(x = std_location_x, y = std_location_y, shape = type.name, color = type.name), size = 5) + 
       scale_color_manual(values = events_scale_colors) + 
-      scale_shape_manual(values = events_scale_shapes) +
-      annotate("point", x = tb_fg$start_loc_x, y = tb_fg$start_loc_y, color = shUEFA["blueMed"], shape = 10, size = 5) +
-      annotate("point", x = tb_fg$end_loc_x, y = tb_fg$end_loc_y, color = shUEFA["blueSky"], shape = 10, size = 5) +
-      annotate("segment", x = tb_fg$start_loc_x, xend = tb_fg$end_loc_x, y = tb_fg$start_loc_y, yend = tb_fg$end_loc_y, arrow = my_arrow, color = shUEFA["blueMed"])
-    #i want these to have tool tips when I hover over them
+      scale_shape_manual(values = events_scale_shapes) 
     
   })
   
   output$pitch_event_data <- renderPrint({
     
-    ttbd <- this_time_bin_data()
-    tb_ev <- ttbd[["tb_ev"]]
+    tmd <- this_match_data()
+    this.ev <- tmd[["this_ev"]]
+    
+    req(input$slider_time)
+    selected_time <- input$slider_time
+    
+    #how many seconds in the past to include events from
+    buffer <- 15
+    
+    req(input$event_select)
+    selected_events <- input$event_select
+    
+    tb_ev <- this.ev %>% filter(between(cum_match_seconds, selected_time - buffer, selected_time))
+    
+    tb_ev %>% arrange(index) %>% select(timestamp, type.name, player.name, team.name)
     
     req(input$pitch_click)
     
@@ -617,10 +610,21 @@ server <- function(input, output){
   output$roster_plot <- renderPlot({
     
     tmd <- this_match_data()
+    this.ev <- tmd[["this_ev"]]
     mp <- tmd[["mp"]]
     
-    ttbd <- this_time_bin_data()
-    tb_mp <- ttbd[["tb_mp"]]
+    req(input$slider_time)
+    selected_time <- input$slider_time
+    
+    #how many seconds in the past to include events from
+    buffer <- 15
+    
+    req(input$event_select)
+    selected_events <- input$event_select
+    
+    tb_ev <- this.ev %>% filter(between(cum_match_seconds, selected_time - buffer, selected_time))
+    tb_player_ids <- unique(tb_ev$player.id)
+    tb_mp <- mp %>% filter(player.id %in% tb_player_ids)
     
     #number of players on each team
     nA <- dim(mp %>% filter(home_or_away == "away"))[1]
