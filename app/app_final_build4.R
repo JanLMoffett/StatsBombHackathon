@@ -163,6 +163,3 @@ ggplot(this.ev) + shUEFA_theme_icy +
 
 
 
-
-
-

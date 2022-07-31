@@ -3,6 +3,7 @@
 library(shiny)
 library(tidyverse)
 library(lubridate)
+library(DT)
 
 source("app_functions/functions_and_constants_visual2.R")
 source("app_functions/functions_and_constants_time2.R")
@@ -60,6 +61,12 @@ ui <- fluidPage(
         color: #223fb3;
       }
       
+      .help-text {
+        font-size: 0.9em;
+        color: #d64202;
+        
+      }
+      
       #match_select_wrapper {
         padding: 10px; 
         background-color: #ffe6cc;
@@ -86,6 +93,19 @@ ui <- fluidPage(
       
       }
       
+      .slider_text_wrapper {
+        padding: 10px;
+      
+      }
+      
+      .help_text_wrapper {
+        padding: 10px; 
+        background-color: #ffe6cc;
+        border: 2px solid #ff4d00;
+        color: #d64202;
+        
+      }
+      
       .shiny-input-container {
         background-color: #ffe6cc;
         color: #d64202;
@@ -108,7 +128,7 @@ ui <- fluidPage(
   #first main row - match selection input
   fluidRow(
     tags$div(id = "match_select_wrapper",
-        tags$p("Welcome to the StatsBomb Win Probability Match Evaluator! This app uses StatsBomb soccer events data and Win Probability to provide and evidence-based approach to reviewing the events of a match and accurately evaluating player contributions to the outcome."),
+        tags$p(class = "help-text", "Welcome to the StatsBomb Win Probability Match Evaluator! This app uses StatsBomb soccer events data and Win Probability to provide an evidence-based approach to reviewing the events of a match and accurately evaluating player contributions to the outcome."),
         #match selection input
         selectInput("match_select", "Select a match from the UEFA Euro 2020 Competition:", matchIDs, selectize = F, width = "500px")
         )),
@@ -120,12 +140,28 @@ ui <- fluidPage(
            plotOutput("timeline_plot", height = 100),
            
            div(id = "timeline_slider_wrapper",
-               uiOutput("timeline_slider")
+               div(
+                 class = "slider_text_wrapper",
+                 tags$p(class = "help-text", 
+                        "Use this slider to select a single second of time in the match. The timestamp and period will display above, the score and possession will display below.")
+               ),
+               
+               uiOutput("timeline_slider"),
+               
+               div(
+                 class = "slider_text_wrapper",
+                 tags$p(class = "help-text", 
+                        "Click and drag on the Match Outcome Probability Plot below to select a time span. A detail of the Outcome Probability Plot and the events contained in the time span will display to the right.")
+               ),
            ),
            plotOutput("wp_plot", height = 250,
                       brush = brushOpts("wp_brush", direction = "x")),
            plotOutput("score_plot", height = 125),
-           plotOutput("possession_plot", height = 100)
+           plotOutput("possession_plot", height = 100),
+           
+           uiOutput("wp_zoom_help")
+           
+           
            
                       
            
@@ -136,25 +172,29 @@ ui <- fluidPage(
     #second column - text and tables, pitch plot
     column(5,
            htmlOutput("match_info", height = 100),
-           #plotOutput("wp_zoom_plot", height = 200),
-           verbatimTextOutput("wp_event_data", ),
-           plotOutput("pitch_plot", height = 350, brush = brushOpts("pitch_brush")),
-           verbatimTextOutput("pitch_event_data")
            
-           )
+           
+             tags$div(
+               class = "help_text_wrapper",
+               tags$p(class = "help-text",
+                      "Click and drag on the plots below to refine your selection."
+                      )
+           ),
+           
+           plotOutput("wp_zoom_plot", height = 250,
+                      brush = brushOpts("wp_zoom_brush", direction = "x")),
+           
+           
+           plotOutput("pitch_plot", height = 350, 
+                      brush = brushOpts("pitch_brush")),
+           
+             
+             DT::dataTableOutput("pitch_event_data")
+             
+           
     
-  ),
+  )),
   
-  #event type checkbox input row
-  fluidRow(
-    div(id = "event_type_select_wrapper",
-           checkboxGroupInput("event_select", "Include event types:", choices = eventTypes2, selected = eventTypes2,
-                              inline = T, width = "100%")
-           )
-    
-    
-    
-  ),
   
   #player event timeline and roster row
   fluidRow(
@@ -233,7 +273,30 @@ server <- function(input, output){
     this.ev <- tmd[["this_ev"]]
     
     req(input$wp_brush)
-    return(brushedPoints(this.ev, input$wp_brush, xvar = "cum_match_seconds") %>% arrange(desc(cum_match_seconds)) %>% slice(1:10))
+    return(brushedPoints(this.ev, input$wp_brush, xvar = "cum_match_seconds") %>% arrange(desc(cum_match_seconds)))
+    
+  })
+  
+  wp_brushed_time <- reactive({
+    tmd <- this_match_data()
+    this.ev <- tmd[["this_ev"]]
+    
+    req(input$wp_brush)
+    bp <- brushedPoints(this.ev, input$wp_brush, xvar = "cum_match_seconds")
+    brushed_time_min <- min(bp$cum_match_seconds, na.rm = T)
+    brushed_time_max <- max(bp$cum_match_seconds, na.rm = T)
+    
+    return(list(min = brushed_time_min, max = brushed_time_max))
+    
+  })
+  
+  wp_zoom_brushed_data <- reactive({
+    wpbd <- wp_brushed_data()
+    
+    req(input$wp_zoom_brush)
+    bp <- brushedPoints(wpbd, input$wp_zoom_brush, xvar = "cum_match_seconds")
+    
+    return(bp)
     
   })
   
@@ -242,8 +305,6 @@ server <- function(input, output){
     
     req(input$pitch_brush)
     return(brushedPoints(wpbd, input$pitch_brush, xvar = "std_location_x", yvar = "std_location_y") %>% arrange(cum_match_seconds))
-    
-    
     
   })
   
@@ -260,6 +321,18 @@ server <- function(input, output){
                      tags$td(paste0("Week ", this.m$match_week)),
                      tags$td(paste0(this.m$stadium.name, " ", this.m$stadium.country.name))))
     
+    
+    
+  })
+  
+  output$wp_zoom_help <- renderUI({
+    
+    if(!is.null(input$wp_brush)){
+      div(id = "event_type_select_wrapper",
+          checkboxGroupInput("event_select", "Include event types:", choices = eventTypes2, selected = eventTypes2,
+                             inline = T, width = "100%"))
+      
+    }
     
     
   })
@@ -289,6 +362,9 @@ server <- function(input, output){
     
     winColor <- shUEFA["ibm_pink"]
     lossColor <- shUEFA["ibm_purple"]
+    
+    brushTime <- list(min = 0, max = 0)
+    if(!is.null(input$wp_brush)){brushTime <- wp_brushed_time()} 
     
     ggplot(this.tb) + 
       shUEFA_theme_icy + 
@@ -322,7 +398,10 @@ server <- function(input, output){
       #selected time score away
       annotate("text", x = selected_time/tmd[["bin_width"]] + this.posAdj, y = max_score + 0.4, label = paste0(tmd[["awayName"]], " ", tb_as), hjust = this.hjust, color = lossColor, size = 6) +
       #selected time score home
-      annotate("text", x = selected_time/tmd[["bin_width"]] + this.posAdj, y = max_score + 1.2, label = paste0(tmd[["homeName"]], " ", tb_hs), hjust = this.hjust, color = winColor, size = 6)
+      annotate("text", x = selected_time/tmd[["bin_width"]] + this.posAdj, y = max_score + 1.2, label = paste0(tmd[["homeName"]], " ", tb_hs), hjust = this.hjust, color = winColor, size = 6) + 
+      
+      #selected time brush marker
+      annotate("rect", xmin = brushTime[["min"]]/tmd[["bin_width"]], xmax = brushTime[["max"]]/tmd[["bin_width"]], ymin = 0, ymax = max_score + 1.5, fill = transpa(shUEFA["blueLt"], 50))
     
     
   })
@@ -394,20 +473,70 @@ server <- function(input, output){
   
   output$wp_zoom_plot <- renderPlot({
     
+    tmd <- this_match_data()
+    this.ev <- tmd[["this_ev"]]
+    this.tb <- tmd[["this_tb"]]
+    pers <- tmd[["pers"]]
+    awayName <- tmd[["awayName"]]
+    homeName <- tmd[["homeName"]]
+    
+    brushTime <- list(min = 0, max = 60)
+    if(!is.null(input$wp_brush)){brushTime <- wp_brushed_time()}
+    
+  
+    winColor = shUEFA["ibm_pink"]
+    drawColor = shUEFA["ibm_yellow"]
+    lossColor = shUEFA["ibm_purple"]
+    
+    pWin_max <- max(this.ev %>% filter(between(cum_match_seconds, brushTime[["min"]], brushTime[["max"]])) %>% pull(p_win), na.rm = T)
+    pDraw_max <- max(this.ev %>% filter(between(cum_match_seconds, brushTime[["min"]], brushTime[["max"]])) %>% pull(p_draw), na.rm = T)
+    pLoss_max <- max(this.ev %>% filter(between(cum_match_seconds, brushTime[["min"]], brushTime[["max"]])) %>% pull(p_loss), na.rm = T)
+    
+    pWin_min <- min(this.ev %>% filter(between(cum_match_seconds, brushTime[["min"]], brushTime[["max"]])) %>% pull(p_win), na.rm = T)
+    pDraw_min <- min(this.ev %>% filter(between(cum_match_seconds, brushTime[["min"]], brushTime[["max"]])) %>% pull(p_draw), na.rm = T)
+    pLoss_min <- min(this.ev %>% filter(between(cum_match_seconds, brushTime[["min"]], brushTime[["max"]])) %>% pull(p_loss), na.rm = T)
+    
+    ggplot(this.ev) + shUEFA_theme_icy +
+      theme(plot.margin = unit(c(7,7,0,0), unit="pt"), 
+            plot.title = element_text(size = 12, hjust = 0, color = shUEFA["blueLt"])) +
+      
+      coord_cartesian(xlim = c(brushTime[["min"]], brushTime[["max"]]), ylim = c(-0.4,1.1), expand = 0) + 
+      
+      labs(title = "Match Outcome Probability Detail") + 
+      
+      #horizontal lines
+      geom_hline(aes(yintercept = 0), color = icyUEFA["ice3"]) +
+      geom_hline(aes(yintercept = 0.5), color = icyUEFA["ice3"]) +
+      geom_hline(aes(yintercept = 1), color = icyUEFA["ice3"]) + 
+      annotate("text", x = brushTime[["max"]], y = -0.05, label = "Probability = 0.0", color = shUEFA["blueLt"], size = 4, hjust = 1) +
+      annotate("text", x = brushTime[["max"]], y = 0.55, label = "Probability = 0.5", color = shUEFA["blueLt"], size = 4, hjust = 1) +
+      annotate("text", x = brushTime[["max"]], y = 1.05, label = "Probability = 1.0", color = shUEFA["blueLt"], size = 4, hjust = 1) +
+      
+      #time label
+      annotate("text", x = brushTime[["min"]], y = -0.3, label = paste0(" Start Time: ", seconds_to_timestamp(pers, brushTime[["min"]])), color = icyUEFA["ice5"], hjust = 0, size = 5) + 
+      annotate("text", x = brushTime[["max"]], y = -0.3, label = paste0("End Time: ", seconds_to_timestamp(pers, brushTime[["max"]]), " "), color = icyUEFA["ice5"], hjust = 1, size = 5) +
+      
+      #period divider
+      annotate("segment", x = pers$cum_total_seconds[1], xend = pers$cum_total_seconds[1], 
+               y = 0, yend = 1, 
+               color = icyUEFA["ice4"], size = 1) + 
+      
+      #probability lines
+      geom_line(aes(x = cum_match_seconds, y = p_win), color = winColor) + 
+      geom_line(aes(x = cum_match_seconds, y = p_draw), color = drawColor) + 
+      geom_line(aes(x = cum_match_seconds, y = p_loss), color = lossColor) +
+      
+      #legend
+      annotate("rect", xmin = 0, xmax = brushTime[["min"]] + ((brushTime[["max"]] - brushTime[["min"]])/2), ymin = 0.78, ymax = 1.1, fill = "white", alpha = 0.5) + 
+      annotate("text", x = brushTime[["min"]] + ((brushTime[["max"]] - brushTime[["min"]])/50), y = 1.05, label = paste0("P(", homeName, " Win) = [", pWin_min, ", ", pWin_max, "]"), color = winColor, hjust = 0, size = 5) + 
+      annotate("text", x = brushTime[["min"]] + ((brushTime[["max"]] - brushTime[["min"]])/50), y = 0.95, label = paste0("P(Draw) = [", pDraw_min, ", ", pDraw_max, "]"), color = drawColor, hjust = 0, size = 5) +
+      annotate("text", x = brushTime[["min"]] + ((brushTime[["max"]] - brushTime[["min"]])/50), y = 0.85, label = paste0("P(", awayName, " Win) = [", pLoss_min, ", ", pLoss_max, "]"), color = lossColor, hjust = 0, size = 5)
+    
     
     
   })
   
-  output$wp_event_data <- renderPrint({
-    
-    wpbd <- wp_brushed_data()
-    wpbd %>% select(player.name, type.name, team.name, timestamp)
-    
-  })
   
-  
-  #time slider input
-  #~~~~~~~~~~~~~~~~~~~~
   output$timeline_slider <- renderUI({
     
     tmd <- this_match_data()
@@ -418,33 +547,58 @@ server <- function(input, output){
     
   })
   
-  
-  
-  #pitch plot
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   output$pitch_plot <- renderPlot({
+    tmd <- this_match_data()
+    this.ev <- tmd[["this_ev"]]
     
-    wpbd <- wp_brushed_data()
+    winColor <- shUEFA["ibm_pink"]
+    lossColor <- shUEFA["ibm_purple"]
+    
+    pd <- this.ev %>% filter(between(cum_match_seconds, 0, 60), !is.na(player.name))
+    
+    if(!is.null(input$wp_zoom_brush)){
+      pd <- wp_zoom_brushed_data()
+    }else{
+      if(!is.null(input$wp_brush)){pd <- wp_brushed_data()}
+    }
+    
+    
     
     #add on locations of events that happened in the time bin
-    plot_pitch(wpbd, icyUEFA["ice5"]) + shUEFA_theme_icy +
+    plot_pitch(pd, icyUEFA["ice5"]) + shUEFA_theme_icy +
+      
+      #showing legend
+      #theme(legend.position = "top") +
+      #team name labels
+      annotate("text", x = 0, y = 83, size = 5, color = winColor, label = tmd[["homeName"]], hjust = 0) +
+      annotate("text", x = 120, y = 83, size = 5, color = lossColor, label = tmd[["awayName"]], hjust = 1) +
+      
+      #goal shading
+      annotate("rect", xmin = 0, xmax = 6, ymin = 30, ymax = 50, fill = transpa(winColor, 100)) + 
+      annotate("rect", xmin = 114, xmax = 120, ymin = 30, ymax = 50, fill = transpa(lossColor, 100)) + 
+      
       geom_point(aes(x = std_location_x, y = std_location_y, shape = type.name, color = type.name), size = 5) + 
       scale_color_manual(values = events_scale_colors) + 
       scale_shape_manual(values = events_scale_shapes) 
     
   })
   
-  output$pitch_event_data <- renderPrint({
+  output$pitch_event_data <- DT::renderDataTable({
     
-    pbd <- pitch_brushed_data()
+    tmd <- this_match_data()
+    this.ev <- tmd[["this_ev"]]
     
-    pbd %>% select(player.name, type.name, team.name, timestamp)
+    dtd <- this.ev %>% filter(between(cum_match_seconds, 0, 60), !is.na(player.name))
     
+    if(!is.null(input$wp_brush)){dtd <- wp_brushed_data()}
+    if(!is.null(input$wp_zoom_brush)){dtd <- wp_zoom_brushed_data()}
+    if(!is.null(input$pitch_brush)){dtd <- pitch_brushed_data()}
+    
+    DT::datatable(dtd %>% select(player.name, type.name, team.name, timestamp),
+                  options = list(pageLength = 5,
+                                 lengthMenu = list(c(5,5,-1), c("5","5","All"))))
   })
-  
-  
-  #timeline plot
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
   output$timeline_plot <- renderPlot({
     
     tmd <- this_match_data()
@@ -462,8 +616,10 @@ server <- function(input, output){
     
     #display the input time in timestamp form
     display_ts <- seconds_to_timestamp(pers, selected_time)
-    #-----
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    brushTime <- list(min = 0, max = 0)
+    if(!is.null(input$wp_brush)){brushTime <- wp_brushed_time()} 
+    
     ggplot() + shUEFA_theme_icy + 
       theme(plot.margin = unit(c(7,7,0,0), unit="pt"), 
             plot.title = element_text(size = 12, hjust = 0, color = shUEFA["blueLt"])) +
@@ -501,7 +657,11 @@ server <- function(input, output){
       #period
       annotate("text", x = selected_time + this.posAdj, y = 20, 
                label = paste0("Period ", cp), hjust = this.hjust, 
-               color = icyUEFA["ice5"], size = 6)
+               color = icyUEFA["ice5"], size = 6) + 
+      
+      #selected time brush marker
+      annotate("rect", xmin = brushTime[["min"]], xmax = brushTime[["max"]], ymin = -20, ymax = 100, fill = transpa(shUEFA["blueLt"], 50))
+    
     
     #-----
     
@@ -532,6 +692,9 @@ server <- function(input, output){
     
     labelColor <- ifelse(selected_team == tmd[["awayName"]], awayColor, homeColor)
     
+    brushTime <- list(min = 0, max = 0)
+    if(!is.null(input$wp_brush)){brushTime <- wp_brushed_time()} 
+    
     #plot of possessions throughout the match
     ggplot(poss) + shUEFA_theme_icy + 
       theme(plot.margin = unit(c(7,7,0,0), unit="pt"),
@@ -559,16 +722,16 @@ server <- function(input, output){
       #possession team label
       annotate("text", x = selected_time + this.posAdj, y = 2.5, 
                label = as.character(selected_team), hjust = this.hjust,
-               color = labelColor, size = 6)
+               color = labelColor, size = 6) + 
+      #selected time brush marker
+      annotate("rect", xmin = brushTime[["min"]], xmax = brushTime[["max"]], ymin = 0, ymax = 3, fill = transpa(shUEFA["blueLt"], 50))
+    
     
     
     
     
   })
-  
 
-  #roster timeline plot
-  #~~~~~~~~~~~~~~~~~~~~
   output$roster_timeline_plot <- renderPlot({
     
     tmd <- this_match_data()
@@ -623,32 +786,40 @@ server <- function(input, output){
     
   })
   
-  #roster plot
-  #~~~~~~~~~~~~~~~~~~~~
   output$roster_plot <- renderPlot({
     
     tmd <- this_match_data()
     this.ev <- tmd[["this_ev"]]
     mp <- tmd[["mp"]]
     
-    req(input$slider_time)
-    selected_time <- input$slider_time
     
-    #how many seconds in the past to include events from
-    buffer <- 15
+    cd <- this.ev %>% filter(between(cum_match_seconds, 0, 60), !is.na(player.name))
+    
+    if(all(!is.null(input$pitch_brush), !is.null(input$wp_zoom_brush), !is.null(input$wp_brush))){
+      cd <- pitch_brushed_data()
+    }else{
+      if(all(!is.null(input$wp_zoom_brush), !is.null(input$wp_zoom))){
+        cd <- wp_zoom_brushed_data()
+        
+      }else{
+        if(!is.null(input$wp_brush)){
+          cd <- wp_brushed_data()
+        }
+      }
+    }
+    
+    
+    
     
     req(input$event_select)
     selected_events <- input$event_select
     
-    tb_ev <- this.ev %>% filter(between(cum_match_seconds, selected_time - buffer, selected_time))
-    tb_player_ids <- unique(tb_ev$player.id)
-    tb_mp <- mp %>% filter(player.id %in% tb_player_ids)
+    cd_player_ids <- unique(cd$player.id)
+    tb_mp <- mp %>% filter(player.id %in% cd_player_ids)
     
     #number of players on each team
     nA <- dim(mp %>% filter(home_or_away == "away"))[1]
     nH <- dim(mp %>% filter(home_or_away == "home"))[1]
-    
-    
     
     ggplot(mp) + shUEFA_theme_icy + 
         
@@ -679,16 +850,7 @@ server <- function(input, output){
       
   })
   
-  output$event_data <- renderPrint({
-    
-    tmd <- this_match_data()
-    
-    req(input$timeline_brush)
-    
-    bp <- brushedPoints(tmd[["this_ev"]], input$timeline_brush, xvar = "cum_match_seconds", yvar = "timeline_y")
-    
-    bp %>% select(function(x) !all(is.na(x)))
-  })
+  
   
   
   
