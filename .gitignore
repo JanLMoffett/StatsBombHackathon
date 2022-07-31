@@ -4,6 +4,7 @@ big_data/
 app/app_data/
 win_probability/wp_data/
 #app/
+*.csv
 
 # History files
 .Rhistory
